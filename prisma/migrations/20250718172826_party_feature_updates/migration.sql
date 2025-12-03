@@ -1,0 +1,10 @@
+-- AlterTable
+ALTER TABLE "season_players" ADD COLUMN     "invitedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ALTER COLUMN "joinedAt" DROP NOT NULL,
+ALTER COLUMN "joinedAt" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "seasons" ADD COLUMN     "allowPlayerInvites" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "maxPlayers" INTEGER NOT NULL DEFAULT 20,
+ADD COLUMN     "minPlayers" INTEGER NOT NULL DEFAULT 2,
+ADD COLUMN     "turnPassingAlgorithm" TEXT NOT NULL DEFAULT 'round-robin';

@@ -1,0 +1,59 @@
+players:
+  - id: jonathan
+    imageUrl: /img/x/jonathan.png
+    isAdmin: false
+    birthdate: "1988-01-01"
+    favorites:
+      - rashid
+      - meg
+      - heather
+      - briana
+      - audrey
+      - dan
+      - darksparkle
+      - caitlin
+    hideLewd: false
+  - id: rashid
+    imageUrl: /img/x/rashid.png
+    isAdmin: false
+    favorites:
+      - jonathan
+      - heather
+      - briana
+      - dan
+  - id: meg
+    imageUrl: /img/x/meg.png
+    isAdmin: false
+  - id: briana
+    imageUrl: /img/x/briana.png
+    isAdmin: false
+  - id: heather
+    imageUrl: /img/x/heather.png
+    isAdmin: false
+  - id: the-dude
+    imageUrl: /img/x/the-dude.png
+    isAdmin: false
+  - id: matte
+    imageUrl: /img/x/matte.png
+    isAdmin: false
+  - id: audrey
+    imageUrl: /img/x/audrey.png
+    isAdmin: false
+  - id: dan
+    imageUrl: /img/x/dan.png
+    isAdmin: false
+  - id: darksparkle
+    imageUrl: /img/x/darksparkle.png
+    isAdmin: false
+  - id: caitlin
+    imageUrl: /img/x/caitlin.png
+    isAdmin: false
+  - id: aaron
+    imageUrl: /img/x/aaron.png
+    isAdmin: false
+  - id: irene
+    imageUrl: /img/x/irene.png
+    isAdmin: false
+  - id: sly
+    imageUrl: /img/x/sly.png
+    isAdmin: false

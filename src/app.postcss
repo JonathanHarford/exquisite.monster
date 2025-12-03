@@ -1,0 +1,182 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@layer base {
+	/* Font Faces */
+	@font-face {
+		font-family: 'header';
+		src: url('/font/HVD_Comic_Serif_Pro.otf');
+	}
+
+	@font-face {
+		font-family: 'body';
+		src: url('/font/Stanberry.ttf');
+	}
+
+	@font-face {
+		font-family: 'script';
+		src: url('/font/HyningsHandwritingV2-Regular.ttf');
+	}
+
+	/* Base Typography */
+	body {
+		font-family: 'body', sans-serif;
+		@apply flex flex-col text-lg md:text-xl;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-family: 'header', serif;
+		line-height: 1.2;
+	}
+
+	/* Header */
+	h1 {
+		font-size: xx-large;
+		text-align: center;
+	}
+
+	/* Page Title */
+	h2 {
+		font-size: xx-large;
+		margin-top: 1rem;
+		margin-bottom: 1rem;
+		text-align: center;
+	}
+
+	h3 {
+		font-size: x-large;
+		margin-top: 1rem;
+		margin-bottom: 1rem;
+	}
+
+	h4 {
+		font-size: large;
+	}
+
+	h5 {
+		font-size: large;
+	}
+
+	h6 {
+		font-size: large;
+	}
+
+	/* Base Link Styles */
+	a {
+		&:hover {
+			@apply underline;
+		}
+	}
+
+	p a {
+		@apply text-primary-500;
+	}
+
+	.list {
+		margin: 0 2em;
+
+		> li {
+			list-style-position: inside;
+			text-indent: -1em;
+		}
+	}
+
+	ul.list {
+		list-style-type: disc;
+	}
+
+	ol.list {
+		list-style-type: decimal;
+	}
+
+	/* Avoid layout shift for icons */
+	iconify-icon {
+		display: inline-block;
+		width: 1em;
+		height: 1em;
+	}
+}
+
+@layer components {
+	/* Card Components */
+	.card-bg {
+		@apply w-full rounded-lg bg-gradient-to-br from-white via-primary-50 to-warning-50 p-4 shadow-md;
+	}
+
+	section,
+	.card {
+		@apply card-bg flex w-full flex-col gap-4;
+	}
+
+	/* Script Text Component */
+	.script {
+		font-family: 'script', sans-serif;
+		font-size: 1.5rem;
+	}
+
+	/* Button Components */
+	.btn {
+		@apply inline-block rounded-md px-2 py-1;
+	}
+
+	.btn-primary {
+		@apply bg-primary-500 text-white hover:bg-primary-600;
+	}
+
+	.btn-cta {
+		@apply bg-success-500 text-white hover:bg-success-600;
+	}
+
+	.btn-danger {
+		@apply bg-danger-500 text-white hover:bg-danger-600;
+	}
+
+	.btn-cancel {
+		@apply border-primary-300 bg-primary-100 text-primary-800 hover:bg-primary-200;
+	}
+
+	/* State Modifiers */
+	:disabled,
+	.disabled {
+		opacity: 50%;
+	}
+
+	.json-debug ul {
+		padding-inline-start: 1rem;
+	}
+}
+
+@layer utilities {
+	/* Custom Utilities */
+	.display-contents {
+		display: contents;
+	}
+
+	/* CSS Custom Properties for Animations */
+	@property --gradient-angle {
+		syntax: '<angle>';
+		initial-value: 0deg;
+		inherits: false;
+	}
+
+	/* Keyframe Animations */
+	@keyframes rotate-gradient {
+		0% {
+			--gradient-angle: 0deg;
+		}
+
+		50% {
+			--gradient-angle: 360deg;
+		}
+
+		100% {
+			--gradient-angle: 0deg;
+		}
+	}
+}

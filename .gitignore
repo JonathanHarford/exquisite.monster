@@ -1,0 +1,57 @@
+node_modules
+
+# Output
+.output
+/.svelte-kit
+/build
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+tests/e2e/.auth/*
+static/img/turns/*
+static/img/profiles/*
+tests/e2e/helpers/imgtmp/*
+logs/*
+coverage/*
+.specstory/*
+
+# Added by Claude Task Master
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+
+# Testing
+playwright-report/
+test-results/
+.playwright_cache
+
+# Environment variables
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+.vercel
+
+# Sentry Config File
+.env.sentry-build-plugin
+

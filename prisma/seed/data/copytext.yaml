@@ -1,0 +1,179 @@
+copytext:
+  - key: home.whatis
+    lang: en
+    value: |
+      What is ${process.env.PUBLIC_SITE_TITLE}?
+
+      ${process.env.PUBLIC_SITE_TITLE} is an online adaptation of the popular party game, [Eat Poop You Cat](https://boardgamegeek.com/boardgame/30618/eat-poop-you-cat):
+
+      1. A player writes a phrase.
+      2. The next player draws a picture of the phrase.
+      3. The next player writes a phrase describing the picture.
+
+      ...and so on...
+
+      Finally, the players get to see the full chain of turns.
+
+  # Notification Templates
+
+  # Game Completion Notifications
+  - key: notification.game_completion.subject
+    lang: en
+    value: '[{{SITE_TITLE}}] Game Complete!'
+  - key: notification.game_completion.title
+    lang: en
+    value: 'Game Complete!'
+  - key: notification.game_completion.body
+    lang: en
+    value: 'A game you participated in has been completed. View the full game to see how your contributions evolved through the chain of turns!'
+  - key: notification.game_completion.html_body
+    lang: en
+    value: |
+      <h2>Game Complete!</h2>
+      <p>A game you participated in has been completed.</p>
+      <p>View the full game to see how your contributions evolved through the chain of turns!</p>
+      <p><a href="{{BASE_URL}}/g/{{gameId}}">View Game</a></p>
+
+  # Admin Flag Notifications
+  - key: notification.admin_flag.subject
+    lang: en
+    value: '[{{SITE_TITLE}}] Turn Flagged for Review'
+  - key: notification.admin_flag.title
+    lang: en
+    value: 'Turn Flagged for Review'
+  - key: notification.admin_flag.body
+    lang: en
+    value: '{{flaggerUsername}} flagged a turn by {{turnCreatorUsername}} for {{reason}}{{explanationSuffix}}'
+  - key: notification.admin_flag.html_body
+    lang: en
+    value: |
+      <h2>Turn Flagged for Review</h2>
+      <p><strong>{{flaggerUsername}}</strong> flagged a turn by <strong>{{turnCreatorUsername}}</strong> for <strong>{{reason}}</strong>.</p>
+      {{explanationHtml}}
+      <p><a href="{{BASE_URL}}/g/{{gameId}}">Review Flag</a></p>
+
+  # Turn Rejected Notifications
+  - key: notification.turn_rejected.subject
+    lang: en
+    value: '[{{SITE_TITLE}}] Your turn was removed'
+  - key: notification.turn_rejected.title
+    lang: en
+    value: 'Turn Removed'
+  - key: notification.turn_rejected.body
+    lang: en
+    value: 'Your turn was flagged for {{reason}} and removed by admin {{adminUsername}}{{explanationSuffix}}'
+  - key: notification.turn_rejected.html_body
+    lang: en
+    value: |
+      <h2>Turn Removed</h2>
+      <p>Your turn was flagged for <strong>{{reason}}</strong> and removed by admin <strong>{{adminUsername}}</strong>.</p>
+      {{explanationHtml}}
+      <p>If you believe this was done in error, please contact support.</p>
+
+  # Flag Rejected Notifications
+  - key: notification.flag_rejected.subject
+    lang: en
+    value: '[{{SITE_TITLE}}] Your flag was dismissed'
+  - key: notification.flag_rejected.title
+    lang: en
+    value: 'Flag Dismissed'
+  - key: notification.flag_rejected.body
+    lang: en
+    value: 'Your flag on a turn by {{turnCreatorUsername}} for {{reason}} was reviewed and dismissed by admin {{adminUsername}}. The turn will remain in the game.'
+  - key: notification.flag_rejected.html_body
+    lang: en
+    value: |
+      <h2>Flag Dismissed</h2>
+      <p>Your flag on a turn by <strong>{{turnCreatorUsername}}</strong> for <strong>{{reason}}</strong> was reviewed and dismissed by admin <strong>{{adminUsername}}</strong>.</p>
+      {{explanationHtml}}
+      <p>The turn will remain in the game.</p>
+
+  # Contact Form Notifications
+  - key: notification.contact_form.subject
+    lang: en
+    value: '[{{SITE_TITLE}}] Contact Form: {{subject}}'
+  - key: notification.contact_form.title
+    lang: en
+    value: 'Contact Form: {{subject}}'
+  - key: notification.contact_form.body
+    lang: en
+    value: "New contact form submission from {{senderName}} ({{senderEmail}}):\n\n{{message}}"
+  - key: notification.contact_form.html_body
+    lang: en
+    value: |
+      <h2>Contact Form Submission</h2>
+      <p><strong>From:</strong> {{senderName}} ({{senderEmail}})</p>
+      <p><strong>Subject:</strong> {{subject}}</p>
+      <p><strong>Message:</strong></p>
+      <blockquote>
+        {{message}}
+      </blockquote>
+      <p><a href="{{BASE_URL}}/admin">Go to Admin Dashboard</a></p>
+
+  # Invitation Accepted Notifications
+  - key: notification.invitation_accepted.subject
+    lang: en
+    value: '[{{SITE_TITLE}}] {{inviteeUsername}} accepted your invitation!'
+  - key: notification.invitation_accepted.title
+    lang: en
+    value: 'Invitation Accepted!'
+  - key: notification.invitation_accepted.body
+    lang: en
+    value: '{{inviteeUsername}} accepted your invitation!'
+  - key: notification.invitation_accepted.html_body
+    lang: en
+    value: |
+      <h2>Invitation Accepted!</h2>
+      <p><strong>{{inviteeUsername}}</strong> accepted your invitation!</p>
+      <p><a href="{{BASE_URL}}/player/{{inviteeId}}">View their profile</a></p>
+
+  # Test Notifications
+  - key: notification.test.subject
+    lang: en
+    value: '[{{SITE_TITLE}}] Test Notification'
+  - key: notification.test.title
+    lang: en
+    value: 'Test Notification'
+  - key: notification.test.body
+    lang: en
+    value: 'This is a test notification sent at {{timestamp}}'
+  - key: notification.test.html_body
+    lang: en
+    value: |
+      <h2>Test Notification</h2>
+      <p>This is a test notification sent at <strong>{{timestamp}}</strong>.</p>
+      <p>If you received this, the notification system is working correctly!</p>
+
+  # Nudge Notifications
+  - key: notification.nudge.subject
+    lang: en
+    value: '[{{SITE_TITLE}}] Your turn is waiting!'
+  - key: notification.nudge.title
+    lang: en
+    value: '👋 Turn Reminder'
+  - key: notification.nudge.body
+    lang: en
+    value: 'Hey {{username}}! Your turn has been waiting for {{waitTime}}. Ready to continue?'
+  - key: notification.nudge.html_body
+    lang: en
+    value: |
+      <h2>👋 Turn Reminder</h2>
+      <p>Hey <strong>{{username}}</strong>! Your turn has been waiting for <strong>{{waitTime}}</strong>.</p>
+      <p>Ready to continue? <a href="{{ACTION_URL}}" style="color: #3B82F6; text-decoration: underline;">Take your turn →</a></p>
+
+  # Party Management Notifications
+  - key: notification.party_cancelled.subject
+    lang: en
+    value: '[{{SITE_TITLE}}] Party Cancelled'
+  - key: notification.party_cancelled.title
+    lang: en
+    value: '❌ Party Cancelled'
+  - key: notification.party_cancelled.body
+    lang: en
+    value: 'The party "{{partyTitle}}" has been cancelled by the creator.'
+  - key: notification.party_cancelled.html_body
+    lang: en
+    value: |
+      <h2>❌ Party Cancelled</h2>
+      <p>The party <strong>"{{partyTitle}}"</strong> has been cancelled by the creator.</p>
+      <p>We apologize for any inconvenience. You can <a href="/s/new" style="color: #3B82F6; text-decoration: underline;">create a new party</a> or browse other available parties.</p>

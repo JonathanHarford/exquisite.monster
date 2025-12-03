@@ -1,0 +1,317 @@
+games:
+  - gameId: 27N
+    minTurns: 2
+    maxTurns: 12
+    writingTimeout: '2m'
+    drawingTimeout: '5m'
+    gameTimeout: '1d'
+    turns:
+      - orderIndex: 0
+        playerId: briana
+        content: 'Wonder is the heaviest element on the periodic table, even a tiny fleck of it stops time.'
+        isDrawing: false
+      - orderIndex: 1
+        playerId: jonathan
+        content: 27N-02.jpg
+        isDrawing: true
+      - orderIndex: 2
+        playerId: darksparkle
+        content: 'Time and gravity submitted to the pulsing fuchsia force of an entirely unknown actinide, allowing it to persist for what felt like eons as Dr Nelson extracted its perfectly cubical mass from a haywire hourglass with tightly gripped forceps.'
+        isDrawing: false
+      - orderIndex: 3
+        playerId: caitlin
+        content: 27N-04.jpg
+        isDrawing: true
+      - orderIndex: 4
+        playerId: aaron
+        content: "As the meteor rocketed toward earth, Dr. Tank Stumpford had mere moments to extract enough cubes of stankonium from the Apocalyptic Hourglass to power the spacecraft that would carry humanity's last remnant to safety."
+        isDrawing: false
+      - orderIndex: 5
+        playerId: matte
+        content: 27N-06.jpg
+        isDrawing: true
+      - orderIndex: 6
+        playerId: audrey
+        content: "Dr. Frankenstein sighed. Today was the day he was going to send humans to space! But somehow, something was missing; the ennui was setting in and it just wasn't the experience he had dreamt of. He shoveled his poison crystals into the rocket anyhow and looked up just in time to notice a meteor coming through the window, interrupting his thoughts."
+        isDrawing: false
+      - orderIndex: 7
+        playerId: rashid
+        content: 27N-08.jpg
+        isDrawing: true
+      - orderIndex: 8
+        playerId: irene
+        content: 'At the control center nestled in the heart of the shining city, the King of Science fired the nuclear-waste-powered death ray straight at Earth.'
+        isDrawing: false
+      - orderIndex: 9
+        playerId: dan
+        content: 27N-10.jpg
+        isDrawing: true
+      - orderIndex: 10
+        playerId: the-dude
+        content: 'The Burger King was so hell-bent on having it his way that he activated the force field around his planet, pointed his atomic laser beam across the solar system, and flame broiled planet earth until it was charred like a thick, crusty, dried-out meatball.'
+        isDrawing: false
+      - orderIndex: 11
+        playerId: sly
+        content: 27N-12.jpg
+        isDrawing: true
+      - orderIndex: 12
+        playerId: heather
+        content: 'Unrelenting in his pursuit for making more flame-broiled Whoppers, the Burger King zapped the planet earth with a ray gun from his flying hamburger, turning the earth into a large meatball.'
+        isDrawing: false
+      - orderIndex: 13
+        playerId: meg
+        content: 27N-14.jpg
+        isDrawing: true
+
+  - gameId: 27J
+    minTurns: 2
+    maxTurns: 12
+    writingTimeout: '2m'
+    drawingTimeout: '5m'
+    gameTimeout: '1d'
+    turns:
+      - orderIndex: 0
+        playerId: the-dude
+        content: 'I really hate how itchy this wool sweater is. I wish someone would knit me one made out of pig intestines instead.'
+        isDrawing: false
+      - orderIndex: 1
+        playerId: sly
+        content: 27J-02.jpg
+        isDrawing: true
+      - orderIndex: 2
+        playerId: heather
+        content: "Ugh, I can't believe that Daryl! He'd totally be the kind of guy who would pray to be able to make a jacket out of pig intestine to replace my raggy sweater."
+        isDrawing: false
+      - orderIndex: 3
+        playerId: meg
+        content: 27J-04.jpg
+        isDrawing: true
+      - orderIndex: 4
+        playerId: briana
+        content: 'Steven, the brilliant porcine mastermind, was laser focused on rooting around for the code in a pile of red, stringy plasma being unleashed by Tod, the smartly dressed but none too bright human.. he just knew he could solve the riddle and save Steve, sitting nearby, bound and worried.'
+        isDrawing: false
+      - orderIndex: 5
+        playerId: jonathan
+        content: 27J-06.jpg
+        isDrawing: true
+      - orderIndex: 6
+        playerId: darksparkle
+        content: 'Percy Pig anxiously examined the flaming mystery pizza that Wallace, disguised as Mr Peanut, had leashed and dragged home from the food trade show, hoping finally here was a substance that would make their hostage emit…the truth.'
+        isDrawing: false
+      - orderIndex: 7
+        playerId: caitlin
+        content: 27J-08.jpg
+        isDrawing: true
+      - orderIndex: 8
+        playerId: aaron
+        content: "Mr. Peanut's pig assistant sweated like… a pig – would the nutty mad scientist manage to train his pet slice of pepperoni pizza to climb into the tube and assemble a sandwich from the ingredients on the table?"
+        isDrawing: false
+      - orderIndex: 9
+        playerId: matte
+        content: 27J-10.jpg
+        isDrawing: true
+      - orderIndex: 10
+        playerId: audrey
+        content: 'As the pizza flew towards the tube, Dr. Stevie the pig sweated with anxiety. After all these years, were her science experiments with Mr Peanut to develop self-delivering pizza finally going to pay off?'
+        isDrawing: false
+      - orderIndex: 11
+        playerId: rashid
+        content: 27J-12.jpg
+        isDrawing: true
+      - orderIndex: 12
+        playerId: irene
+        content: 'Professor Piggy and Mr. Peanut were flummoxed by a malfunction in the Pizza Tube.'
+        isDrawing: false
+
+  - gameId: 27I
+    minTurns: 2
+    maxTurns: 12
+    writingTimeout: '2m'
+    drawingTimeout: '5m'
+    gameTimeout: '1d'
+    turns:
+      - orderIndex: 0
+        playerId: dan
+        content: 'One fateful day, Sutro Tower came to life and stalked down the hill to attack the Golden Gate Bridge - just as the newspaper writer had foretold.'
+        isDrawing: false
+      - orderIndex: 1
+        playerId: the-dude
+        content: 27I-02.jpg
+        isDrawing: true
+      - orderIndex: 2
+        playerId: sly
+        content: 'The prophetic playwright wrote descriptively of the terrible terrorist attack on the Bay Bridge – that newsworthy day when an angry pylon greatly intimidated another – and now we only have to wait until our hero finishes his story to know why oh why.'
+        isDrawing: false
+      - orderIndex: 3
+        playerId: heather
+        content: 27I-04.jpg
+        isDrawing: true
+      - orderIndex: 4
+        playerId: meg
+        content: 'As more residents of Staten Island commute by car every year, the Verrazano Bridge began to think too much of itself, so that every day it berated the terrified Staten Island Ferry as it crossed the water.'
+        isDrawing: false
+      - orderIndex: 5
+        playerId: briana
+        content: 27I-06.jpg
+        isDrawing: true
+      - orderIndex: 6
+        playerId: jonathan
+        content: "Scuffy watched sadly as the cars drove onto the Brooklyn Bridge. He'd seen it all before: folks thinking they were going to the Towers of Hanoi, despite the bridge itself being very clear that it leads to Brooklyn, a land of flies and powerful car kisses."
+        isDrawing: false
+      - orderIndex: 7
+        playerId: darksparkle
+        content: 27I-08.jpg
+        isDrawing: true
+      - orderIndex: 8
+        playerId: caitlin
+        content: 'The commuter imagined a world where he and his golden retriever could follow the open country road toward the future, but alas he was headed toward stinky New Jersey and his dog would have to stay behind.'
+        isDrawing: false
+      - orderIndex: 9
+        playerId: aaron
+        content: 27I-10.jpg
+        isDrawing: true
+      - orderIndex: 10
+        playerId: matte
+        content: 'in his dreams it had been so perfect (a road trip with his dog, a cool fedora perched on his head, on their way to new york together) but Reed had to admit he had not foreseen the sudden bout of motion sickness which would leave them both stranded on the NJ turnpike, looking forlornly at each other.'
+        isDrawing: false
+      - orderIndex: 11
+        playerId: audrey
+        content: 27I-12.jpg
+        isDrawing: true
+      - orderIndex: 12
+        playerId: rashid
+        content: 'The bearded, young man with a green fedora would love to continue his road-trip with his yellow/brown dog, but unfortunately they had crashed into a bush where the streets have no name.'
+        isDrawing: false
+      - orderIndex: 13
+        playerId: irene
+        content: 27I-14.jpg
+        isDrawing: true
+
+  - gameId: 27H
+    minTurns: 2
+    maxTurns: 12
+    writingTimeout: '2m'
+    drawingTimeout: '5m'
+    gameTimeout: '1d'
+    turns:
+      - orderIndex: 0
+        playerId: irene
+        content: 'The girl did not know what to do, and began to weep - and just then, a tiny little man stepped in and asked, "What will you give me if I spin this straw into gold for you?"'
+        isDrawing: false
+      - orderIndex: 1
+        playerId: dan
+        content: 27H-02.jpg
+        isDrawing: true
+      - orderIndex: 2
+        playerId: the-dude
+        content: 'This little leprechaun is looking at me all like, "Hey babe, you know who you can trust? This guy!! Put that hay into that spinny thing and all your problems are going to disappear!" But I just cannot stop thinking: where the fuck is all the gold supposed to come from?!! It''s seriously driving me into a state of despair.'
+        isDrawing: false
+      - orderIndex: 3
+        playerId: sly
+        content: 27H-04.jpg
+        isDrawing: true
+      - orderIndex: 4
+        playerId: heather
+        content: "Rumpelstiltskin, the leprechaun, had promised to use his pot to spin hay into gold, but the spiders in the pot didn't know how to spin anything but spiky things."
+        isDrawing: false
+      - orderIndex: 5
+        playerId: meg
+        content: 27H-06.jpg
+        isDrawing: true
+      - orderIndex: 6
+        playerId: briana
+        content: 'Sean, the angry leprechaun, exclaimed with greed "I can''t wait for all those gold coins I will be producing from putting all that hay in my magic crucible!", but little did he know that inside the kettle, spiders were spawning instead, and boy were they angry and confused.'
+        isDrawing: false
+      - orderIndex: 7
+        playerId: jonathan
+        content: 27H-08.jpg
+        isDrawing: true
+      - orderIndex: 8
+        playerId: darksparkle
+        content: '"HOW MANY TIMES have you been told??!" bellowed Rumplestiltskin. "if you let the fire die, only possessed arachnids will emerge from my Alchematic-Pro, not gold"'
+        isDrawing: false
+      - orderIndex: 9
+        playerId: caitlin
+        content: 27H-10.jpg
+        isDrawing: true
+      - orderIndex: 10
+        playerId: aaron
+        content: "Santa's head elf looked on in horror: the machine he'd designed to transport Santa directly from his workshop to fireplaces across the world was full of bugs, and there were gold ingots all over the floor."
+        isDrawing: false
+      - orderIndex: 11
+        playerId: matte
+        content: 27H-12.jpg
+        isDrawing: true
+      - orderIndex: 12
+        playerId: audrey
+        content: 'Uh oh! Santa Clause went down a chimney to an old furnace full of spiders instead of a fireplace by mistake! He was trapped, but luckily one of his angry tall elves was nearby to open the door and help him with the scattered gifts.'
+        isDrawing: false
+      - orderIndex: 13
+        playerId: rashid
+        content: 27H-14.jpg
+        isDrawing: true
+
+  - gameId: 27L
+    minTurns: 2
+    maxTurns: 12
+    writingTimeout: '2m'
+    drawingTimeout: '5m'
+    gameTimeout: '1d'
+    isLewd: true
+    turns:
+      - orderIndex: 0
+        playerId: heather
+        content: "It's like Forest Bathing, but in an eggplant garden, tended to by silent gnomes."
+        isDrawing: false
+      - orderIndex: 1
+        playerId: meg
+        content: 27L-02.jpg
+        isDrawing: true
+      - orderIndex: 2
+        playerId: briana
+        content: "Eggplants — variegated, Japanese, long and thin, squat and round, clumped in groups of 2 or 3 or all alone—eggplants in every color of eggplant there is.. John pondered them all, as he silently lay still amongst them, and he noticed the gnomes didn't talk and didn't sing as they watered their precious plants."
+        isDrawing: false
+      - orderIndex: 3
+        playerId: jonathan
+        content: 27L-04.jpg
+        isDrawing: true
+      - orderIndex: 4
+        playerId: darksparkle
+        content: 'Tom froze, his afternoon reverie tucked among the rows of variegated eggplants evaporating, as two dead-eyed gnomes came into sight watering the turgid fruits. His only hope was to blend in.'
+        isDrawing: false
+      - orderIndex: 5
+        playerId: caitlin
+        content: 27L-06.jpg
+        isDrawing: true
+      - orderIndex: 6
+        playerId: aaron
+        content: "It felt like a dream; little Samuel stood stock still, pantsless, praying feverishly that the coal-eyed gnomes wouldn't discover him among the eggplants they were watering."
+        isDrawing: false
+      - orderIndex: 7
+        playerId: matte
+        content: 27L-08.jpg
+        isDrawing: true
+      - orderIndex: 8
+        playerId: audrey
+        content: 'Bill and Ted remained stoic, but behind those expressionless bearded faces, their souls were dark. It was SO MUCH WORK being a giant garden gnome during the growing season! Bill kept watch with his trident while Ted watered the eggplants and humanplants.'
+        isDrawing: false
+      - orderIndex: 9
+        playerId: rashid
+        content: 27L-10.jpg
+        isDrawing: true
+      - orderIndex: 10
+        playerId: irene
+        content: 'Bill and Ted appraised their work, looming over the freshly watered soil, satisfied that no one would find the bodies buried beneath the eggplant garden.'
+        isDrawing: false
+      - orderIndex: 11
+        playerId: dan
+        content: 27L-12.jpg
+        isDrawing: true
+      - orderIndex: 12
+        playerId: the-dude
+        content: 'Evil Bill and Ted hatched a totally bogus plan – after pushing Good Bill and Ted off a cliff and killing them, they buried their bodies in their garden to fertilize their new crop of eggplants. "Excellent!," cried Evil Bill. "I''m totally going to text the princesses now to tell them they''re eating eggplant for dinner tonight, if you know what I mean!" "Totally evil!," cried Evil Ted.'
+        isDrawing: false
+      - orderIndex: 13
+        playerId: sly
+        content: 27L-14.jpg
+        isDrawing: true

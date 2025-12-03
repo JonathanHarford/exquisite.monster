@@ -1,0 +1,6 @@
+defaultConfig:
+  minTurns: 8
+  maxTurns: null
+  writingTimeout: '1m' # 1 minute
+  drawingTimeout: '30m' # 30 minutes
+  gameTimeout: '7d' # 7 days

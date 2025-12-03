@@ -1,0 +1,247 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model GameConfig {
+  id             String   @id
+  minTurns       Int
+  maxTurns       Int? // null means unlimited
+  writingTimeout String
+  drawingTimeout String
+  gameTimeout    String
+  isLewd         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  game           Game?    @relation("GameConfig")
+  season         Season?  @relation("SeasonConfig")
+
+  @@map("game_configs")
+}
+
+model Player {
+  id              String    @id // This will be Clerk's user ID
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  username        String    @unique // Mirror of Clerk's username
+  imageUrl        String // Mirror of Clerk's imageUrl
+  aboutMe         String    @default("")
+  websiteUrl      String    @default("")
+  birthday        DateTime?
+  hideLewdContent Boolean   @default(true)
+  isAdmin         Boolean   @default(false)
+  bannedAt        DateTime?
+
+  // Relations
+  turns         Turn[]
+  turnFlags     TurnFlag[]
+  seasons       PlayersInSeasons[]
+  notifications Notification[]
+  createdSeasons Season[]        @relation("SeasonCreator")
+
+  // Favorites relationships
+  favoritedBy PlayerFavorite[] @relation("FavoritedPlayer")
+  favorites   PlayerFavorite[] @relation("FavoritingPlayer")
+  gameFavorites GameFavorite[] @relation("PlayerGameFavorites")
+  Comment     Comment[]
+
+  @@index([bannedAt])
+  @@map("players")
+}
+
+model Game {
+  id          String    @id // g_(timestamp_base36)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  expiresAt   DateTime
+  completedAt DateTime?
+  deletedAt   DateTime?
+
+  config   GameConfig @relation("GameConfig", fields: [configId], references: [id], onDelete: Cascade)
+  configId String     @unique
+
+  season   Season? @relation("SeasonGames", fields: [seasonId], references: [id], onDelete: Cascade)
+  seasonId String?
+
+  posterTurn   Turn?   @relation("GamePoster", fields: [posterTurnId], references: [id])
+  posterTurnId String?
+
+  // Relations
+  turns       Turn[]           @relation("GameTurns")
+  favoritedBy GameFavorite[]   @relation("GameFavorites")
+  Comment     Comment[]
+
+  @@index([deletedAt])
+  @@index([completedAt])
+  @@index([createdAt])
+  @@index([completedAt, deletedAt])
+  @@map("games")
+}
+
+model Season {
+  id          String    @id @default(cuid()) // s_ prefix will be added in application code
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+  createdBy   String    // ID of the player who created this party
+
+  title                 String
+  startDeadline         DateTime?
+  status                String    @default("open") // 'open' | 'active' | 'completed'
+  minPlayers            Int       @default(2)
+  maxPlayers            Int       @default(20)
+  turnPassingAlgorithm  String    @default("round-robin") // 'round-robin' | 'algorithmic'
+  allowPlayerInvites    Boolean   @default(false)
+
+  gameConfig   GameConfig @relation("SeasonConfig", fields: [gameConfigId], references: [id], onDelete: Cascade)
+  gameConfigId String     @unique // Stores season-specific game config
+
+  // Relations
+  creator Player             @relation("SeasonCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  players PlayersInSeasons[]
+  games   Game[]             @relation("SeasonGames")
+
+  @@index([status, createdAt])
+  @@map("seasons")
+}
+
+model PlayersInSeasons {
+  id        String    @id @default(cuid())
+  seasonId  String
+  playerId  String
+  invitedAt DateTime  @default(now())
+  joinedAt  DateTime? // null = invited but not joined, not null = accepted invitation
+
+  season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([seasonId, playerId])
+  @@map("season_players")
+}
+
+model Turn {
+  id          String    @id // t_(game_timestamp_base36)_(turn_index)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  expiresAt   DateTime?
+  completedAt DateTime?
+  gameId      String
+  playerId    String
+  content     String // Either writing text or drawing URL
+  isDrawing   Boolean
+  orderIndex  Int
+  rejectedAt  DateTime?
+
+  // Relations
+  game      Game       @relation("GameTurns", fields: [gameId], references: [id], onDelete: Cascade)
+  posterFor Game[]     @relation("GamePoster")
+  player    Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  flags     TurnFlag[]
+
+  @@unique([gameId, orderIndex])
+  @@index([gameId, playerId])
+  @@index([rejectedAt])
+  @@index([completedAt])
+  @@index([playerId, completedAt])
+  @@index([gameId, completedAt]) // For checking incomplete turns by game
+  @@index([gameId, completedAt, rejectedAt]) // For counting completed non-rejected turns
+  @@map("turns")
+}
+
+model TurnFlag {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  turnId      String
+  playerId    String
+  reason      String // 'spam', 'offensive', 'other'
+  explanation String?
+  resolvedAt  DateTime?
+
+  // Relations
+  turn   Turn   @relation(fields: [turnId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([resolvedAt])
+  @@index([turnId, resolvedAt])
+  @@index([playerId]) // For checking player flags
+  @@map("turn_flags")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  type      String // 'game_completion', 'admin_flag', 'turn_expired', etc.
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  data      Json? // Optional additional data (game ID, flag details, etc.)
+  actionUrl String? // Optional URL for notification action (e.g., link to game, admin panel)
+
+  // Relations
+  user Player @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model PlayerFavorite {
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  favoritingPlayerId String
+  favoritedPlayerId  String
+
+  // Relations
+  favoritingPlayer Player @relation("FavoritingPlayer", fields: [favoritingPlayerId], references: [id], onDelete: Cascade)
+  favoritedPlayer  Player @relation("FavoritedPlayer", fields: [favoritedPlayerId], references: [id], onDelete: Cascade)
+
+  @@unique([favoritingPlayerId, favoritedPlayerId])
+  @@map("player_favorites")
+}
+
+model GameFavorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  playerId  String
+  gameId    String
+
+  player Player @relation("PlayerGameFavorites", fields: [playerId], references: [id], onDelete: Cascade)
+  game   Game   @relation("GameFavorites", fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, gameId])
+  @@map("game_favorites")
+}
+
+model CopyText {
+  id    String @id @default(cuid())
+  key   String
+  lang  String
+  value String
+
+  @@unique([key, lang])
+  @@map("copy_texts")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  text      String
+  gameId    String
+  playerId  String
+
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([gameId])
+  @@index([playerId])
+  @@map("comments")
+}
