@@ -1,14 +1,12 @@
-import { QueueManager, createQueueOptions, createWorkerOptions } from './config.js';
+import { addJob } from '$lib/server/services/queueService';
 import { EmailService } from '$lib/server/services/emailService.js';
 import { logger } from '$lib/server/logger.js';
-import { queueMonitor } from './monitor.js';
-import type { Job } from 'bullmq';
 import { prisma } from '$lib/server/prisma';
 import { getMessageTemplate, type MessageData } from '$lib/server/messaging';
 import { clerkClient } from 'svelte-clerk/server';
 
 // Job data interfaces
-interface GeneralNotificationJobData {
+export interface GeneralNotificationJobData {
 	type: 'general-notification';
 	notificationId: string;
 	notificationType: string;
@@ -16,7 +14,7 @@ interface GeneralNotificationJobData {
 	templateData: MessageData;
 }
 
-interface FlagSubmittedJobData {
+export interface FlagSubmittedJobData {
 	type: 'flag-submitted';
 	flagId: string;
 	turnId: string;
@@ -27,7 +25,7 @@ interface FlagSubmittedJobData {
 	turnCreatorUsername: string;
 }
 
-interface FlagConfirmedJobData {
+export interface FlagConfirmedJobData {
 	type: 'flag-confirmed';
 	flagId: string;
 	turnId: string;
@@ -40,7 +38,7 @@ interface FlagConfirmedJobData {
 	turnCreatorEmail: string;
 }
 
-interface FlagRejectedJobData {
+export interface FlagRejectedJobData {
 	type: 'flag-rejected';
 	flagId: string;
 	turnId: string;
@@ -53,16 +51,14 @@ interface FlagRejectedJobData {
 	flaggerEmail: string;
 }
 
-type EmailJobData =
+export type EmailJobData =
 	| FlagSubmittedJobData
 	| FlagConfirmedJobData
 	| FlagRejectedJobData
 	| GeneralNotificationJobData;
 
 // Email worker processor
-const processEmailJob = async (job: Job): Promise<void> => {
-	const data: EmailJobData = job.data;
-
+export const processEmailJob = async (data: EmailJobData): Promise<void> => {
 	try {
 		switch (data.type) {
 			case 'general-notification': {
@@ -179,49 +175,19 @@ const processEmailJob = async (job: Job): Promise<void> => {
 	}
 };
 
-// Create email queue manager with custom options
-const emailQueueManager = new QueueManager(
-	'email',
-	createQueueOptions({
-		defaultJobOptions: {
-			removeOnComplete: true,
-			removeOnFail: true,
-			attempts: 3,
-			backoff: {
-				type: 'exponential',
-				delay: 2000
-			}
-		}
-	}),
-	createWorkerOptions({
-		concurrency: 2, // Lower concurrency for email sending
-		limiter: {
-			max: 10, // Max 10 emails per second
-			duration: 1000
-		}
-	}),
-	processEmailJob
-);
-
-// Export initialization function to be called at app startup
+// Initialization (No-op)
 export const initializeEmailQueue = async (): Promise<void> => {
-	await emailQueueManager.initialize();
-
-	// Register with monitoring system
-	if (emailQueueManager.isReady) {
-		queueMonitor.registerQueue('email', emailQueueManager);
-	}
+	// No-op
 };
 
 // Queue helper functions
 export const queueFlagSubmittedEmail = async (
 	data: Omit<FlagSubmittedJobData, 'type'>
 ): Promise<void> => {
-	await emailQueueManager.addJob(
-		'flag-submitted',
+	await addJob(
+		'email',
 		{ type: 'flag-submitted', ...data },
 		{
-			priority: 1, // High priority for admin notifications
 			jobId: `flag-submitted-${data.flagId}`
 		}
 	);
@@ -230,11 +196,10 @@ export const queueFlagSubmittedEmail = async (
 export const queueGeneralNotification = async (
 	data: Omit<GeneralNotificationJobData, 'type'>
 ): Promise<void> => {
-	await emailQueueManager.addJob(
-		'general-notification',
+	await addJob(
+		'email',
 		{ type: 'general-notification', ...data },
 		{
-			priority: 3, // Low priority for general notifications
 			jobId: `notification-${data.notificationId}`
 		}
 	);
@@ -243,11 +208,10 @@ export const queueGeneralNotification = async (
 export const queueFlagConfirmedEmail = async (
 	data: Omit<FlagConfirmedJobData, 'type'>
 ): Promise<void> => {
-	await emailQueueManager.addJob(
-		'flag-confirmed',
+	await addJob(
+		'email',
 		{ type: 'flag-confirmed', ...data },
 		{
-			priority: 2, // Medium priority for user notifications
 			jobId: `flag-confirmed-${data.flagId}`
 		}
 	);
@@ -256,11 +220,10 @@ export const queueFlagConfirmedEmail = async (
 export const queueFlagRejectedEmail = async (
 	data: Omit<FlagRejectedJobData, 'type'>
 ): Promise<void> => {
-	await emailQueueManager.addJob(
-		'flag-rejected',
+	await addJob(
+		'email',
 		{ type: 'flag-rejected', ...data },
 		{
-			priority: 2, // Medium priority for user notifications
 			jobId: `flag-rejected-${data.flagId}`
 		}
 	);

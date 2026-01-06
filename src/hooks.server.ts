@@ -84,7 +84,7 @@ export const handleError = Sentry.handleErrorWithSentry((({ error, event }) => {
 		path: event.url.pathname,
 		method: event.request.method,
 		userAgent: event.request.headers.get('user-agent'),
-		userId: event.locals.auth().userId
+		userId: event.locals.auth?.().userId
 	});
 
 	// NEVER expose internal error details to frontend, even in development

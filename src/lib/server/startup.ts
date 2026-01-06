@@ -1,9 +1,5 @@
 import { MINUTES } from '$lib/datetime.js';
 import { logger } from './logger.js';
-import { initializeEmailQueue } from './queues/emailQueue.js';
-import { initializeExpirationQueues } from './queues/expirationQueue.js';
-import { initializeStorageCleanupQueue, scheduleRecurringCleanup } from './queues/storageCleanupQueue.js';
-import { queueMonitor } from './queues/monitor.js';
 import { GameUseCases } from './usecases/GameUseCases.js';
 
 // Use globalThis to persist across hot reloads in development
@@ -47,23 +43,11 @@ export const initializeServerServices = async (): Promise<void> => {
 	try {
 		logger.info('Initializing server services...');
 
-		// Initialize BullMQ queues
-		await Promise.all([
-			initializeEmailQueue(), 
-			initializeExpirationQueues(),
-			initializeStorageCleanupQueue()
-		]);
-
-		// Schedule recurring cleanup jobs
-		await scheduleRecurringCleanup();
-
-		// Start queue monitoring in production
-		if (process.env.NODE_ENV === 'production') {
-			queueMonitor.startMonitoring(MINUTES);
-		}
+		// Note: Queues are now database-backed and processed via Vercel Cron.
+		// No initialization required.
 
 		// Start fallback expiration check to catch any missed queue jobs
-		// This runs every 5 minutes as a safety net
+		// This runs every 5 minutes as a safety net (if the server is persistent)
 		const interval = setInterval(async () => {
 			try {
 				logger.debug('Running fallback expiration check...');
@@ -85,7 +69,6 @@ export const initializeServerServices = async (): Promise<void> => {
 					setFallbackInterval(null);
 				}
 
-				await queueMonitor.shutdownAllQueues();
 				process.exit(0);
 			} catch (error) {
 				logger.error('Error during graceful shutdown:', error);
