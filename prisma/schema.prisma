@@ -245,3 +245,17 @@ model Comment {
   @@index([playerId])
   @@map("comments")
 }
+
+model Job {
+  id          String   @id @default(cuid())
+  type        String
+  payload     Json
+  status      String   @default("pending")
+  runAt       DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  key         String?  @unique
+
+  @@index([status, runAt])
+  @@map("jobs")
+}
