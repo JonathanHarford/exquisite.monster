@@ -10,6 +10,7 @@ import {
 } from '$lib/server/queues/emailQueue';
 import { clerkClient } from 'svelte-clerk/server';
 import { createNotification } from '../services/notificationService';
+import { getRequestEvent } from '$app/server';
 
 export class FlagUseCases {
 	static async flagTurn(
@@ -18,6 +19,15 @@ export class FlagUseCases {
 		reason: 'spam' | 'offensive' | 'other',
 		explanation?: string
 	): Promise<TurnFlag> {
+		// Add business context to OpenTelemetry span
+		const event = getRequestEvent();
+		if (event?.tracing) {
+			event.tracing.current.setAttribute('flag.action', 'submit');
+			event.tracing.current.setAttribute('flag.turnId', turnId);
+			event.tracing.current.setAttribute('flag.playerId', playerId);
+			event.tracing.current.setAttribute('flag.reason', reason);
+		}
+
 		const existingFlags = await prisma.turnFlag.findMany({
 			where: {
 				playerId,
@@ -57,6 +67,11 @@ export class FlagUseCases {
 		}
 
 		const flag = await createTurnFlag(turnId, playerId, reason, explanation);
+
+		// Add flag ID to span
+		if (event?.tracing) {
+			event.tracing.current.setAttribute('flag.id', flag.id);
+		}
 
 		try {
 			const [flagger, turnWithCreator] = await Promise.all([
@@ -123,6 +138,16 @@ export class FlagUseCases {
 	}
 
 	static async rejectFlag(flagId: string, adminId?: string): Promise<TurnFlag> {
+		// Add business context to OpenTelemetry span
+		const event = getRequestEvent();
+		if (event?.tracing) {
+			event.tracing.current.setAttribute('flag.action', 'reject');
+			event.tracing.current.setAttribute('flag.id', flagId);
+			if (adminId) {
+				event.tracing.current.setAttribute('flag.adminId', adminId);
+			}
+		}
+
 		const flag = await prisma.turnFlag.findUnique({
 			where: {
 				id: flagId,
@@ -213,6 +238,16 @@ export class FlagUseCases {
 	}
 
 	static async confirmFlag(flagId: string, adminId?: string): Promise<TurnFlag> {
+		// Add business context to OpenTelemetry span
+		const event = getRequestEvent();
+		if (event?.tracing) {
+			event.tracing.current.setAttribute('flag.action', 'confirm');
+			event.tracing.current.setAttribute('flag.id', flagId);
+			if (adminId) {
+				event.tracing.current.setAttribute('flag.adminId', adminId);
+			}
+		}
+
 		const flag = await prisma.turnFlag.findUnique({
 			where: {
 				id: flagId,

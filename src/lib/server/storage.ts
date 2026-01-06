@@ -5,11 +5,9 @@ import { createClient } from '@supabase/supabase-js';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import {
-	optimizeTurnImage,
-	optimizeProfilePicture,
 	validateImage,
-	validateProfilePictureImage
-} from './imageOptimization';
+	validateProfilePicture
+} from './imageValidation';
 // import { CACHE_CONFIGS, buildCacheControlHeader } from './cacheHeaders';
 import { FILE_UPLOAD, formatFileSize } from '../constants';
 
@@ -79,21 +77,32 @@ export async function upload(file: File, prefix: string): Promise<{ path: string
 	logger.info(`Uploading ${file.name} (${file.type}) as ${prefix}-${file.name}`);
 	const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-	// Validate and optimize the image
-	const validation = await validateImage(fileBuffer);
+	// Validate the image (no more server-side resizing)
+	const validation = validateImage(fileBuffer);
 	if (!validation.isValid) {
 		throw new Error(validation.error || 'Invalid image file');
 	}
 
-	// Optimize the image for turn uploads
-	const optimizedImageSet = await optimizeTurnImage(fileBuffer);
-	const optimizedBuffer = optimizedImageSet.original.buffer;
+	// Use original buffer
+	// Detect format from validation or fallback to file.type
+	// We want to preserve the extension if possible.
+	// validateImage returns a format string from image-size (e.g. 'jpg', 'png').
+	// file.type is mime type (e.g. 'image/jpeg').
 
-	// Create filename with WebP extension
+	let extension = validation.format;
+	if (extension === 'jpeg') extension = 'jpg'; // Normalize
+	if (!extension) {
+		// Fallback to extraction from filename if format detection failed but validation somehow passed (unlikely)
+		extension = file.name.split('.').pop()?.toLowerCase() || 'bin';
+	}
+
+	const contentType = file.type || `image/${extension === 'jpg' ? 'jpeg' : extension}`;
+
+	// Create filename
 	const baseFilename = file.name.replace(/\.[^/.]+$/, ''); // Remove original extension
-	const filename = `${prefix}-${baseFilename}.webp`;
+	const filename = `${prefix}-${baseFilename}.${extension}`;
 
-	return await uploadToCloud(optimizedBuffer, filename, 'turns', 'image/webp');
+	return await uploadToCloud(fileBuffer, filename, 'turns', contentType);
 }
 
 /**
@@ -114,23 +123,29 @@ export async function uploadProfilePicture(file: File, userId: string): Promise<
 
 	const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-	// Validate the image for profile pictures (no aspect ratio constraints)
-	const validation = await validateProfilePictureImage(fileBuffer);
+	// Validate the image for profile pictures
+	const validation = validateProfilePicture(fileBuffer);
 	if (!validation.isValid) {
 		throw new Error(validation.error || 'Invalid image file');
 	}
 
-	// Optimize the image for profile pictures (with square cropping)
-	const optimizedImageSet = await optimizeProfilePicture(fileBuffer);
-	const optimizedBuffer = optimizedImageSet.original.buffer;
+	// No optimization/cropping server-side
 
-	// Create filename with user ID, timestamp, and WebP extension
+	let extension = validation.format;
+	if (extension === 'jpeg') extension = 'jpg';
+	if (!extension) {
+		extension = file.name.split('.').pop()?.toLowerCase() || 'bin';
+	}
+
+	const contentType = file.type || `image/${extension === 'jpg' ? 'jpeg' : extension}`;
+
+	// Create filename with user ID, timestamp
 	const timestamp = Date.now();
-	const filename = `${userId}-${timestamp}.webp`;
+	const filename = `${userId}-${timestamp}.${extension}`;
 
 	logger.info(
-		`Uploading optimized profile picture for user ${userId}: ${file.name} -> ${filename}`
+		`Uploading profile picture for user ${userId}: ${file.name} -> ${filename}`
 	);
 
-	return await uploadToCloud(optimizedBuffer, filename, 'profiles', 'image/webp');
+	return await uploadToCloud(fileBuffer, filename, 'profiles', contentType);
 }

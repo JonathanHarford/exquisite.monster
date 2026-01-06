@@ -7,6 +7,7 @@ import { gameInclude } from '../services/gameService';
 import { scheduleGameExpiration } from '../queues/expirationQueue';
 import { createNotification } from '../services/notificationService';
 import { parseDuration } from '$lib/datetime';
+import { getRequestEvent } from '$app/server';
 
 // Import delegate classes
 import { GameFinder } from './game/GameFinder';
@@ -50,6 +51,17 @@ export class GameUseCases {
 		return GameFinder.findAllPendingGamesByPlayerId(playerId);
 	}
 
+	static async findStalestValidPendingTurn(playerId: string): Promise<Turn | null> {
+		const pendingTurns = await this.findAllPendingTurnsByPlayerId(playerId);
+		for (const turn of pendingTurns) {
+			const isExpired = await this.deleteTurnIfExpired(turn.id);
+			if (!isExpired) {
+				return turn;
+			}
+		}
+		return null;
+	}
+
 	static async checkAvailableGameTypes(playerId: string) {
 		return GameFinder.checkAvailableGameTypes(playerId);
 	}
@@ -81,6 +93,12 @@ export class GameUseCases {
 		type: 'writing' | 'drawing',
 		content: string
 	): Promise<Turn> {
+		// Add business context to OpenTelemetry span
+		const event = getRequestEvent();
+		if (event?.tracing) {
+			event.tracing.current.setAttribute('turn.id', id);
+			event.tracing.current.setAttribute('turn.type', type);
+		}
 		return TurnManager.completeTurn(id, type, content);
 	}
 
@@ -162,6 +180,13 @@ export class GameUseCases {
 	}
 
 	static async completeGame(id: string): Promise<void> {
+		// Add business context to OpenTelemetry span
+		const event = getRequestEvent();
+		if (event?.tracing) {
+			event.tracing.current.setAttribute('game.id', id);
+			event.tracing.current.setAttribute('game.action', 'complete');
+		}
+
 		// Avoid duplicate notifications
 		const existingGame = await prisma.game.findUnique({
 			where: { id },
@@ -292,6 +317,16 @@ export class GameUseCases {
 		isLewd: boolean = false,
 		createdAt?: Date
 	) {
+		// Add business context to OpenTelemetry span
+		const event = getRequestEvent();
+		if (event?.tracing) {
+			event.tracing.current.setAttribute('game.action', 'create');
+			event.tracing.current.setAttribute('game.isLewd', isLewd);
+			if (seasonId) {
+				event.tracing.current.setAttribute('game.seasonId', seasonId);
+			}
+		}
+
 		if (seasonId && !createdAt) {
 			// Games in a season should all have the same createdAt date or the grid looks weird
 			throw new Error('Season ID provided but no createdAt date');
@@ -320,6 +355,12 @@ export class GameUseCases {
 		const game = toDomainGameWithTurns(dbGame);
 		await scheduleGameExpiration(game);
 		logger.info(`C ${game.id}${game.config.isLewd ? ' (18+)' : ''}`);
+
+		// Add the created game ID to the span
+		if (event?.tracing) {
+			event.tracing.current.setAttribute('game.id', game.id);
+		}
+
 		return game;
 	}
 

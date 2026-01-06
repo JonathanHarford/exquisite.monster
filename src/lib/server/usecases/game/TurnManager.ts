@@ -197,105 +197,15 @@ export class TurnManager {
 
 		const { isLewd, turnType } = options ?? {};
 
-		let game: GameWithTurns | null = null;
+		const MAX_RETRIES = 3;
+		let attempt = 0;
 
-		if (turnType === 'first') {
-			logger.info(`'first' turnType requested, creating new game for player ${playerId}`);
-			try {
-				const config = await fetchDefaultGameConfig();
-				game = await GameUseCases.createGame(config, undefined, isLewd ?? false);
-			} catch (error) {
-				logger.error('Failed to create game', error, { playerId });
-				throw error;
-			}
-		} else {
-			logger.info(
-				`Attempting to find available game for player ${playerId}${isLewd !== undefined ? ` (isLewd: ${isLewd})` : ''}${turnType ? ` (type: ${turnType})` : ''}`
-			);
+		while (attempt < MAX_RETRIES) {
+			attempt++;
+			let game: GameWithTurns | null = null;
 
-			const candidateGames = await prisma.game.findMany({
-				where: {
-					completedAt: null,
-					deletedAt: null,
-					...(isLewd !== undefined && { config: { isLewd: isLewd } }),
-					AND: [
-						{
-							turns: {
-								none: {
-									playerId // Current player has not played in this game
-								}
-							}
-						},
-						{
-							// Don't match to games with unresolved flagged turns
-							turns: {
-								none: {
-									flags: {
-										some: {
-											resolvedAt: null
-										}
-									}
-								}
-							}
-						},
-						{
-							// Don't match to games where this player has previously flagged any turn
-							turns: {
-								none: {
-									flags: {
-										some: {
-											playerId
-										}
-									}
-								}
-							}
-						},
-						{
-							// Only match to games where ALL existing turns are completed
-							turns: {
-								none: {
-									completedAt: null
-								}
-							}
-						}
-					]
-				},
-				orderBy: { createdAt: 'asc' },
-				include: gameInclude
-			});
-
-			if (candidateGames.length > 0) {
-				for (const candidate of candidateGames) {
-					const completedTurnsCount = candidate.turns.filter(
-						(turn) => turn.completedAt !== null && turn.rejectedAt === null
-					).length;
-
-					if (candidate.config.maxTurns && completedTurnsCount >= candidate.config.maxTurns) {
-						continue; // Skip full game
-					}
-
-					const nextTurnIsDrawing = completedTurnsCount % 2 === 1;
-
-					if (!turnType) {
-						// 'any' turn
-						game = toDomainGameWithTurns(candidate);
-						break;
-					} else if (turnType === 'writing' && !nextTurnIsDrawing) {
-						game = toDomainGameWithTurns(candidate);
-						break;
-					} else if (turnType === 'drawing' && nextTurnIsDrawing) {
-						game = toDomainGameWithTurns(candidate);
-						break;
-					}
-				}
-			}
-
-			if (game) {
-				logger.info(`Joining existing game ${game.id} for player ${playerId}`);
-			} else {
-				logger.info(
-					`No available game found, creating new game for player ${playerId}${isLewd !== undefined ? ` (isLewd: ${isLewd})` : ''}`
-				);
+			if (turnType === 'first') {
+				logger.info(`'first' turnType requested, creating new game for player ${playerId}`);
 				try {
 					const config = await fetchDefaultGameConfig();
 					game = await GameUseCases.createGame(config, undefined, isLewd ?? false);
@@ -303,26 +213,161 @@ export class TurnManager {
 					logger.error('Failed to create game', error, { playerId });
 					throw error;
 				}
+			} else {
+				logger.info(
+					`Attempting to find available game for player ${playerId}${isLewd !== undefined ? ` (isLewd: ${isLewd})` : ''}${turnType ? ` (type: ${turnType})` : ''}`
+				);
+
+				const candidateGames = await prisma.game.findMany({
+					where: {
+						completedAt: null,
+						deletedAt: null,
+						...(isLewd !== undefined && { config: { isLewd: isLewd } }),
+						AND: [
+							{
+								turns: {
+									none: {
+										playerId // Current player has not played in this game
+									}
+								}
+							},
+							{
+								// Don't match to games with unresolved flagged turns
+								turns: {
+									none: {
+										flags: {
+											some: {
+												resolvedAt: null
+											}
+										}
+									}
+								}
+							},
+							{
+								// Don't match to games where this player has previously flagged any turn
+								turns: {
+									none: {
+										flags: {
+											some: {
+												playerId
+											}
+										}
+									}
+								}
+							},
+							{
+								// Only match to games where ALL existing turns are completed
+								turns: {
+									none: {
+										completedAt: null
+									}
+								}
+							}
+						]
+					},
+					orderBy: { createdAt: 'asc' },
+					include: gameInclude
+				});
+
+				if (candidateGames.length > 0) {
+					for (const candidate of candidateGames) {
+						const completedTurnsCount = candidate.turns.filter(
+							(turn) => turn.completedAt !== null && turn.rejectedAt === null
+						).length;
+
+						if (candidate.config.maxTurns && completedTurnsCount >= candidate.config.maxTurns) {
+							continue; // Skip full game
+						}
+
+						const nextTurnIsDrawing = completedTurnsCount % 2 === 1;
+
+						if (!turnType) {
+							// 'any' turn
+							game = toDomainGameWithTurns(candidate);
+							break;
+						} else if (turnType === 'writing' && !nextTurnIsDrawing) {
+							game = toDomainGameWithTurns(candidate);
+							break;
+						} else if (turnType === 'drawing' && nextTurnIsDrawing) {
+							game = toDomainGameWithTurns(candidate);
+							break;
+						}
+					}
+				}
+
+				if (game) {
+					logger.info(`Joining existing game ${game.id} for player ${playerId}`);
+				} else {
+					logger.info(
+						`No available game found, creating new game for player ${playerId}${isLewd !== undefined ? ` (isLewd: ${isLewd})` : ''}`
+					);
+					try {
+						const config = await fetchDefaultGameConfig();
+						game = await GameUseCases.createGame(config, undefined, isLewd ?? false);
+					} catch (error) {
+						logger.error('Failed to create game', error, { playerId });
+						throw error;
+					}
+				}
+			}
+
+			if (!game) {
+				throw new Error('Unable to find or create game');
+			}
+
+			try {
+				const turn = await prisma.$transaction(
+					async (tx) => {
+						// Re-verify that the game has no pending turns (race condition check)
+						// This prevents joining a game that received a turn between the findMany above and this transaction
+						if (game) {
+							const pendingTurnsCount = await tx.turn.count({
+								where: {
+									gameId: game.id,
+									completedAt: null
+								}
+							});
+
+							if (pendingTurnsCount > 0) {
+								throw new Error('RACE_CONDITION_RETRY');
+							}
+
+							// Also ensure the player hasn't joined this game in the meantime
+							const playerInGame = await tx.turn.count({
+								where: {
+									gameId: game.id,
+									playerId
+								}
+							});
+
+							if (playerInGame > 0) {
+								throw new Error('RACE_CONDITION_RETRY');
+							}
+						}
+
+						return await this.createTurn(playerId, game!, { tx });
+					},
+					{
+						isolationLevel: 'ReadCommitted',
+						timeout: 5000 // Short timeout for simple operation
+					}
+				);
+
+				// Schedule expiration outside transaction to avoid network I/O blocking
+				await scheduleTurnExpiration(turn);
+
+				return turn;
+			} catch (error: any) {
+				if (error.message === 'RACE_CONDITION_RETRY') {
+					logger.warn(
+						`Race condition detected when joining game ${game.id}, retrying... (attempt ${attempt})`
+					);
+					continue;
+				}
+				throw error;
 			}
 		}
 
-		if (!game) {
-			throw new Error('Unable to find or create game');
-		}
-
-		const turn = await prisma.$transaction(
-			async (tx) => {
-				return await this.createTurn(playerId, game!, { tx });
-			},
-			{
-				isolationLevel: 'ReadCommitted',
-				timeout: 5000 // Short timeout for simple operation
-			}
-		);
-
-		// Schedule expiration outside transaction to avoid network I/O blocking
-		await scheduleTurnExpiration(turn);
-
-		return turn;
+		throw new Error('Failed to join a game after multiple attempts');
 	}
 }

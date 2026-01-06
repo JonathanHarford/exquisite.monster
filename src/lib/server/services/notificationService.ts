@@ -5,7 +5,6 @@ import { logger } from '$lib/server/logger';
 import type { Prisma } from '@prisma/client';
 import { getMessageTemplate, type MessageData } from '$lib/server/messaging';
 import { queueGeneralNotification } from '$lib/server/queues/emailQueue';
-import { redis } from '$lib/server/redis';
 
 export interface CreateNotificationData {
 	userId: string;
@@ -73,15 +72,6 @@ export const createNotification = async (data: CreateNotificationData): Promise<
 	});
 
 	const domainNotification = toDomainNotification(notification);
-
-	try {
-		await redis.publish(`notification:${data.userId}`, JSON.stringify(domainNotification));
-	} catch (error) {
-		logger.error('Failed to publish notification to Redis', {
-			userId: data.userId,
-			error: error instanceof Error ? error.message : String(error)
-		});
-	}
 
 	try {
 		await queueGeneralNotification({

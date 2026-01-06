@@ -17,7 +17,7 @@ import { logger } from '$lib/server/logger';
 import {
 	assignNextTurnRoundRobin,
 	assignNextTurnAlgorithmic,
-} from '../../logic/turnAssignment';
+} from '../../../logic/turnAssignment';
 
 interface CreatePartyOptions {
 	title: string;
