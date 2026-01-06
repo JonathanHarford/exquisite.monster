@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GameUseCases } from '$lib/server/usecases/GameUseCases';
 import { actions } from '../../src/routes/g/[gameId]/+page.server';
 import { fail, redirect } from '@sveltejs/kit';
@@ -26,6 +26,11 @@ vi.mock('@sveltejs/kit', async () => {
 describe('Admin Game Actions', () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
 	});
 
 	describe('killGame action', () => {

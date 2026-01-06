@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
 	obfuscateUserId,
 	deobfuscateUserId,
@@ -8,6 +8,14 @@ import {
 } from '$lib/utils/invitation';
 
 describe('Invitation Utilities', () => {
+	beforeEach(() => {
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
 	describe('obfuscateUserId and deobfuscateUserId', () => {
 		it('should obfuscate and deobfuscate user IDs correctly', () => {
 			const testIds = ['user_123abc', 'user_2yQPtsw13L3crbnWSylu0edenhI', 'simple_id', 'a'];

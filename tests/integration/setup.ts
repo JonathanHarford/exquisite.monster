@@ -12,62 +12,26 @@ if (!hasDatabaseUrl) {
 	throw new Error('DATABASE_URL or DATABASE_URL_TEST must be set to run integration tests');
 }
 
-// Mocks for Redis, BullMQ, logger, etc. - even integration tests mock external services
-vi.mock('ioredis', () => ({
-	default: vi.fn().mockImplementation(() => ({
-		connect: vi.fn().mockResolvedValue(undefined),
-		disconnect: vi.fn().mockResolvedValue(undefined),
-		quit: vi.fn().mockResolvedValue(undefined),
-		get: vi.fn().mockResolvedValue(null),
-		set: vi.fn().mockResolvedValue('OK'),
-		del: vi.fn().mockResolvedValue(1),
-		exists: vi.fn().mockResolvedValue(0),
-		expire: vi.fn().mockResolvedValue(1),
-		ttl: vi.fn().mockResolvedValue(-1),
-		flushall: vi.fn().mockResolvedValue('OK'),
-		on: vi.fn(),
-		off: vi.fn(),
-		removeAllListeners: vi.fn()
-	}))
-}));
-
-vi.mock('bullmq', () => ({
-	Queue: vi.fn().mockImplementation(() => ({
-		add: vi.fn().mockResolvedValue({ id: 'mock-job-id' }),
-		close: vi.fn().mockResolvedValue(undefined),
-		on: vi.fn()
-	})),
-	Worker: vi.fn().mockImplementation(() => ({
-		run: vi.fn().mockResolvedValue(undefined),
-		close: vi.fn().mockResolvedValue(undefined),
-		on: vi.fn()
-	})),
-	Job: vi.fn()
-}));
-
+// Mock queue modules
 vi.mock('$lib/server/queues/expirationQueue', () => ({
 	scheduleTurnExpiration: vi.fn().mockResolvedValue(undefined),
 	scheduleGameExpiration: vi.fn().mockResolvedValue(undefined),
-	turnExpirationQueue: null,
-	gameExpirationQueue: null
+	schedulePartyDeadline: vi.fn().mockResolvedValue(undefined),
+	cancelTurnExpiration: vi.fn().mockResolvedValue(undefined),
+	cancelGameExpiration: vi.fn().mockResolvedValue(undefined)
 }));
 
 vi.mock('$lib/server/queues/emailQueue', () => ({
 	queueFlagSubmittedEmail: vi.fn().mockResolvedValue(undefined),
 	queueFlagConfirmedEmail: vi.fn().mockResolvedValue(undefined),
 	queueFlagRejectedEmail: vi.fn().mockResolvedValue(undefined),
-	queueGeneralNotification: vi.fn().mockResolvedValue(undefined),
-	emailQueue: null
+	queueGeneralNotification: vi.fn().mockResolvedValue(undefined)
 }));
 
-vi.mock('$lib/server/redis', () => ({
-	redis: {
-		connect: vi.fn().mockResolvedValue(undefined),
-		disconnect: vi.fn().mockResolvedValue(undefined),
-		quit: vi.fn().mockResolvedValue(undefined),
-		get: vi.fn().mockResolvedValue(null),
-		set: vi.fn().mockResolvedValue('OK')
-	}
+vi.mock('$lib/server/queues/storageCleanupQueue', () => ({
+	scheduleTemporaryFileCleanup: vi.fn().mockResolvedValue(undefined),
+	scheduleOrphanedFileCleanup: vi.fn().mockResolvedValue(undefined),
+	scheduleRecurringCleanup: vi.fn().mockResolvedValue(undefined)
 }));
 
 vi.mock('winston', () => ({
@@ -93,6 +57,17 @@ vi.mock('@sentry/sveltekit', () => ({
 	captureException: vi.fn(),
 	init: vi.fn(),
 	handleError: vi.fn(),
+}));
+
+// Mock SvelteKit server module
+vi.mock('$app/server', () => ({
+	getRequestEvent: vi.fn().mockReturnValue({
+		tracing: {
+			current: {
+				setAttribute: vi.fn()
+			}
+		}
+	})
 }));
 
 // Mock Clerk client and related modules
@@ -189,9 +164,9 @@ beforeAll(async () => {
 			originalConsoleLog(...args);
 		}
 	};
-	console.info = () => {};
-	console.warn = () => {};
-	console.error = () => {};
+	console.info = () => { };
+	console.warn = () => { };
+	console.error = () => { };
 
 	console.log('🧪 Running migrations and seeding test database...');
 	console.log(`🧪 Using DATABASE_URL: ${rawDatabaseUrl}`);

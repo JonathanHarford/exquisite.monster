@@ -12,9 +12,9 @@ import { getPlayers, replaceDefaultConfig } from './helpers';
 const mockCheckAndHandlePartyCompletion = vi.fn().mockResolvedValue(true);
 
 // Mock the module before any imports
-vi.doMock('$lib/server/usecases/PartyUseCases', () => ({
+vi.mock('$lib/server/usecases/PartyUseCases', () => ({
 	PartyUseCases: {
-		checkAndHandlePartyCompletion: mockCheckAndHandlePartyCompletion
+		checkAndHandlePartyCompletion: (...args: any[]) => mockCheckAndHandlePartyCompletion(...args)
 	}
 }));
 
@@ -44,7 +44,7 @@ describe('GameUseCases', () => {
 	let defaultConfig: GameConfig;
 
 	beforeAll(async () => {
-		vi.resetModules();
+		// vi.resetModules(); // This can break vi.mock/vi.doMock
 		const allUsers = await AdminUseCases.getPlayerList();
 		players = await getPlayers(allUsers, 4);
 		defaultConfig = await replaceDefaultConfig(testConfig);

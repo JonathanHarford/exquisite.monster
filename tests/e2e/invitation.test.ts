@@ -1,18 +1,24 @@
 import { test, expect } from '@playwright/test';
 import { clerk } from '@clerk/testing/playwright';
 import { obfuscateUserId } from '../../src/lib/utils/invitation.js';
-import { isAuthed, isLoggedOut, newContextPage } from './helpers/auth';
+import { isAuthed, isLoggedOut, newContextPage, getUserIdFromAuth } from './helpers/auth';
 import { setupTestData, cleanupTestData } from './helpers/db';
 import { TestDataFactory } from './helpers/test-data-factory';
 
-// TODO: A new instance will have a different user ID, so we need to get the user ID from the account page
-const p1UserId = 'user_2s3x21nyRyiiUlLIGVoo5wFlPAT';
-const p1InvitationUrl = `/?i=${obfuscateUserId(p1UserId)}`;
+let p1UserId: string;
+let p1InvitationUrl: string;
 
 test.describe('Invitation System', () => {
 	const testId = TestDataFactory.generateTestId();
 
 	test.beforeAll(async () => {
+		const userId = getUserIdFromAuth('tests/e2e/.auth/p1.json');
+		if (!userId) {
+			throw new Error('Could not get user ID from auth file tests/e2e/.auth/p1.json');
+		}
+		p1UserId = userId;
+		p1InvitationUrl = `/?i=${obfuscateUserId(p1UserId)}`;
+
 		await setupTestData(testId);
 	});
 

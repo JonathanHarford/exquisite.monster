@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { assignNextTurnAlgorithmic } from '$lib/server/logic/turnAssignment';
+import { assignNextTurnAlgorithmic } from '$lib/logic/turnAssignment';
 import { generateSquare } from '$lib/utils/williamsSquare';
 import type { GameWithTurns, Turn } from '$lib/types/domain';
 

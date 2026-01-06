@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateSquare } from '$lib/utils/williamsSquare';
-import { assignNextTurnAlgorithmic } from '$lib/server/logic/turnAssignment';
+import { assignNextTurnAlgorithmic } from '$lib/logic/turnAssignment';
 import type { GameWithTurns, Turn } from '$lib/types/domain';
 
 // Helper to create mock game

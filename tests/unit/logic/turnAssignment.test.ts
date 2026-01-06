@@ -5,7 +5,7 @@ import {
     assignNextTurnAlgorithmic,
     type TurnContext,
     type GameTurnInfo
-} from '$lib/server/logic/turnAssignment';
+} from '$lib/logic/turnAssignment';
 
 describe('Turn Assignment Logic', () => {
     describe('stringToSeed', () => {

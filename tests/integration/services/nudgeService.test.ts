@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { Player, Turn, Notification } from '@prisma/client';
 import { nudgePlayer, getTurnNudgeStats } from '$lib/server/services/nudgeService';
 import { prisma } from '$lib/server/prisma';
 import { createNotification } from '$lib/server/services/notificationService';
@@ -53,11 +54,11 @@ describe('NudgeService', () => {
 				orderIndex: 2
 			};
 
-			(prisma.notification.findFirst as any).mockResolvedValue(null); // No recent nudge
-			(prisma.player.findUnique as any).mockResolvedValue(mockPlayer);
-			(prisma.turn.findUnique as any).mockResolvedValue(mockTurn);
-			(prisma.notification.count as any).mockResolvedValue(1); // 1 existing nudge
-			(createNotification as any).mockResolvedValue({ id: 'notification-123' });
+			vi.mocked(prisma.notification.findFirst).mockResolvedValue(null); // No recent nudge
+			vi.mocked(prisma.player.findUnique).mockResolvedValue(mockPlayer as unknown as Player);
+			vi.mocked(prisma.turn.findUnique).mockResolvedValue(mockTurn as unknown as Turn);
+			vi.mocked(prisma.notification.count).mockResolvedValue(1); // 1 existing nudge
+			vi.mocked(createNotification).mockResolvedValue({ id: 'notification-123', data: {} } as any);
 
 			// Act
 			const result = await nudgePlayer(
@@ -95,7 +96,7 @@ describe('NudgeService', () => {
 			const recentNudge = {
 				createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000) // 12 hours ago
 			};
-			(prisma.notification.findFirst as any).mockResolvedValue(recentNudge);
+			vi.mocked(prisma.notification.findFirst).mockResolvedValue(recentNudge as unknown as Notification);
 
 			// Act
 			const result = await nudgePlayer(
@@ -114,9 +115,9 @@ describe('NudgeService', () => {
 
 		it('should handle missing player gracefully', async () => {
 			// Arrange
-			(prisma.notification.findFirst as any).mockResolvedValue(null);
-			(prisma.player.findUnique as any).mockResolvedValue(null);
-			(prisma.turn.findUnique as any).mockResolvedValue({ createdAt: new Date(), orderIndex: 0 });
+			vi.mocked(prisma.notification.findFirst).mockResolvedValue(null);
+			vi.mocked(prisma.player.findUnique).mockResolvedValue(null);
+			vi.mocked(prisma.turn.findUnique).mockResolvedValue({ createdAt: new Date(), orderIndex: 0 } as unknown as Turn);
 
 			// Act
 			const result = await nudgePlayer(
@@ -134,9 +135,9 @@ describe('NudgeService', () => {
 
 		it('should handle missing turn gracefully', async () => {
 			// Arrange
-			(prisma.notification.findFirst as any).mockResolvedValue(null);
-			(prisma.player.findUnique as any).mockResolvedValue({ username: 'TestPlayer' });
-			(prisma.turn.findUnique as any).mockResolvedValue(null);
+			vi.mocked(prisma.notification.findFirst).mockResolvedValue(null);
+			vi.mocked(prisma.player.findUnique).mockResolvedValue({ username: 'TestPlayer' } as unknown as Player);
+			vi.mocked(prisma.turn.findUnique).mockResolvedValue(null);
 
 			// Act
 			const result = await nudgePlayer(
@@ -170,11 +171,11 @@ describe('NudgeService', () => {
 					orderIndex: 0
 				};
 
-				(prisma.notification.findFirst as any).mockResolvedValue(null);
-				(prisma.player.findUnique as any).mockResolvedValue(mockPlayer);
-				(prisma.turn.findUnique as any).mockResolvedValue(mockTurn);
-				(prisma.notification.count as any).mockResolvedValue(0);
-				(createNotification as any).mockResolvedValue({ id: 'notification-123' });
+				vi.mocked(prisma.notification.findFirst).mockResolvedValue(null);
+				vi.mocked(prisma.player.findUnique).mockResolvedValue(mockPlayer as unknown as Player);
+				vi.mocked(prisma.turn.findUnique).mockResolvedValue(mockTurn as unknown as Turn);
+				vi.mocked(prisma.notification.count).mockResolvedValue(0);
+				vi.mocked(createNotification).mockResolvedValue({ id: 'notification-123', data: {} } as any);
 
 				// Act
 				await nudgePlayer(mockNudgerPlayerId, mockNudgedPlayerId, mockTurnId, mockGameId);
@@ -199,11 +200,11 @@ describe('NudgeService', () => {
 			const mockTurn = { playerId: mockNudgedPlayerId };
 			const mockNudge = { createdAt: new Date() };
 
-			(prisma.turn.findUnique as any).mockResolvedValue(mockTurn);
-			(prisma.notification.count as any).mockResolvedValue(3);
-			(prisma.notification.findFirst as any)
+			vi.mocked(prisma.turn.findUnique).mockResolvedValue(mockTurn as unknown as Turn);
+			vi.mocked(prisma.notification.count).mockResolvedValue(3);
+			vi.mocked(prisma.notification.findFirst)
 				.mockResolvedValueOnce(null) // Cooldown check
-				.mockResolvedValueOnce(mockNudge); // Last nudge
+				.mockResolvedValueOnce(mockNudge as unknown as Notification); // Last nudge
 
 			// Act
 			const result = await getTurnNudgeStats(mockTurnId);
@@ -219,7 +220,7 @@ describe('NudgeService', () => {
 
 		it('should handle missing turn', async () => {
 			// Arrange
-			(prisma.turn.findUnique as any).mockResolvedValue(null);
+			vi.mocked(prisma.turn.findUnique).mockResolvedValue(null);
 
 			// Act
 			const result = await getTurnNudgeStats(mockTurnId);
@@ -238,11 +239,11 @@ describe('NudgeService', () => {
 				createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000) // 6 hours ago
 			};
 
-			(prisma.turn.findUnique as any).mockResolvedValue(mockTurn);
-			(prisma.notification.count as any).mockResolvedValue(1);
-			(prisma.notification.findFirst as any)
-				.mockResolvedValueOnce(recentNudge) // Cooldown check
-				.mockResolvedValueOnce(recentNudge); // Last nudge
+			vi.mocked(prisma.turn.findUnique).mockResolvedValue(mockTurn as unknown as Turn);
+			vi.mocked(prisma.notification.count).mockResolvedValue(1);
+			vi.mocked(prisma.notification.findFirst)
+				.mockResolvedValueOnce(recentNudge as unknown as Notification) // Cooldown check
+				.mockResolvedValueOnce(recentNudge as unknown as Notification); // Last nudge
 
 			// Act
 			const result = await getTurnNudgeStats(mockTurnId);

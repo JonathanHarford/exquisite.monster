@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { clearUserData } from '$lib/appstate.svelte';
 
 // Extend globalThis type for our cached URLs
@@ -54,11 +54,21 @@ describe('Sign-out cleanup', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
+		// Ensure mock implementation is reset (in case other tests changed it)
+		mockCaches.keys.mockResolvedValue(['user-cache', 'auth-cache', 'other-cache']);
+
 		// Reset global state
 		globalThis.cachedImageUrls = {
 			preview1: 'blob:http://localhost/123',
 			preview2: 'blob:http://localhost/456'
 		};
+
+		// Suppress console.warn noise
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
 	});
 
 	it('should clear all localStorage data', () => {
