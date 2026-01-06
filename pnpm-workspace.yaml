@@ -1,0 +1,11 @@
+ignoredBuiltDependencies:
+  - esbuild
+  - msgpackr-extract
+  - sharp
+onlyBuiltDependencies:
+  - '@clerk/shared'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@sentry/cli'
+  - prisma
+  - supabase

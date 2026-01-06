@@ -2,7 +2,6 @@ import { defineConfig } from 'vitest/config';
 import { loadEnv } from 'vite';
 import { sentrySvelteKit } from '@sentry/sveltekit';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { enhancedImages } from '@sveltejs/enhanced-img';
 // import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 
 export default defineConfig(({ mode }) => {
@@ -13,7 +12,6 @@ export default defineConfig(({ mode }) => {
 	// Only enable Sentry plugin if DSN is configured
 	const plugins = [
 		...(env.PUBLIC_SENTRY_DSN ? [sentrySvelteKit()] : []),
-		enhancedImages(),
 		sveltekit()
 		// SvelteKitPWA({
 		// 	strategies: 'generateSW',
