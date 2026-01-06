@@ -1,92 +1,70 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { notificationActions } from '$lib/stores/notifications.svelte';
+	import { appState } from '$lib/appstate.svelte';
 	import { useClerkContext } from 'svelte-clerk';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { PUBLIC_DISABLE_POLLING } from '$env/static/public';
+	import { getNotifications } from '../../routes/api/notifications.remote';
 
-	let eventSource: EventSource | null = null;
 	const clerkContext = useClerkContext();
+	let pollingInterval: ReturnType<typeof setInterval> | null = null;
+	const POLLING_INTERVAL_MS = 30000; // 30 seconds
 
-	// Initial fetch to populate notifications
-	async function fetchInitialNotifications() {
+	// Fetch notifications from the API
+	async function fetchNotifications() {
 		if (!browser || !navigator.onLine) return;
 
 		try {
 			if (!clerkContext.clerk?.session) return;
-			const token = await clerkContext.clerk.session.getToken();
+			// Remote functions handle auth via cookies automatically
+			const notifications = await getNotifications();
 
-			if (!token) return;
-
-			const response = await fetch('/api/notifications', {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (response.ok) {
-				const notifications = await response.json();
-				notificationActions.setNotifications(notifications);
-			}
+			// Use setNotifications to update the store with the latest list
+			// Since we are polling, we might be overwriting local optimistic updates if we are not careful,
+			// but for a notification list, replacing with the server state is usually correct.
+			appState.notificationStore.setNotifications(notifications);
 		} catch (error) {
-			console.error('Error fetching initial notifications:', error);
+			console.error('Error fetching notifications:', error);
 		}
 	}
 
-	async function startSSE() {
-		if (!browser || PUBLIC_DISABLE_POLLING === 'true' || eventSource) return;
+	function startPolling() {
+		if (!browser || PUBLIC_DISABLE_POLLING === 'true' || pollingInterval) return;
 
-		// Wait for session to be ready
-		await new Promise((resolve) => {
-			const interval = setInterval(() => {
-				if (clerkContext.clerk?.session) {
-					clearInterval(interval);
-					resolve(true);
-				}
-			}, 1000);
-		});
+		// Initial fetch
+		fetchNotifications();
 
-		// Fetch existing notifications first
-		await fetchInitialNotifications();
-
-		eventSource = new EventSource('/api/notifications/sse');
-
-		eventSource.onopen = () => {
-			console.log('SSE connection opened');
-		};
-
-		eventSource.addEventListener('notification', (event) => {
-			try {
-				const notification = JSON.parse(event.data);
-				notificationActions.addNotification(notification);
-			} catch (err) {
-				console.error('Error parsing notification event:', err);
-			}
-		});
-
-		eventSource.onerror = (err) => {
-			console.error('SSE error:', err);
-			// EventSource automatically attempts to reconnect
-			// We could close it if unauthorized, but standard EventSource API
-			// doesn't give status codes easily.
-		};
+		// Set up polling
+		pollingInterval = setInterval(() => {
+			fetchNotifications();
+		}, POLLING_INTERVAL_MS);
 	}
 
-	function stopSSE() {
-		if (eventSource) {
-			eventSource.close();
-			eventSource = null;
+	function stopPolling() {
+		if (pollingInterval) {
+			clearInterval(pollingInterval);
+			pollingInterval = null;
 		}
+	}
 
-		// Clear notification data when stopping (user signed out)
-		notificationActions.setNotifications([]);
+	// Watch for session changes to start/stop polling
+	$: if (clerkContext.clerk?.session) {
+		if (!pollingInterval) {
+			startPolling();
+		}
+	} else {
+		stopPolling();
+		appState.notificationStore.setNotifications([]);
 	}
 
 	onMount(() => {
-		console.log('NotificationListener mounted (SSE)');
-		startSSE();
-		return () => {
-			stopSSE();
-		};
+		console.log('NotificationListener mounted (Polling)');
+		if (clerkContext.clerk?.session) {
+			startPolling();
+		}
+	});
+
+	onDestroy(() => {
+		stopPolling();
 	});
 </script>

@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+import { resolve } from '$app/paths';
 import { AdminUseCases } from '$lib/server/usecases/AdminUseCases';
 import { prisma } from '$lib/server/prisma';
 import type { PageServerLoad } from './$types';
@@ -12,7 +13,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		: null;
 
 	if (!player?.isAdmin) {
-		throw redirect(302, '/');
+		throw redirect(302, resolve('/'));
 	}
 
 	const partyList = await AdminUseCases.getPartyList();

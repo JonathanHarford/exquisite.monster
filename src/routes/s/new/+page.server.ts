@@ -3,6 +3,7 @@ import { superValidate } from 'sveltekit-superforms/server';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { partyCreationSchema } from '$lib/formSchemata';
 import { error, fail, redirect } from '@sveltejs/kit';
+import { resolve } from '$app/paths';
 import { logger } from '$lib/server/logger';
 import { PartyUseCases } from '$lib/server/usecases/PartyUseCases';
 import { GameUseCases } from '$lib/server/usecases/GameUseCases';
@@ -18,7 +19,7 @@ export const load = (async ({ parent }) => {
 	// Check if user has pending party turns - prevent party creation
 	const pendingPartyTurns = await GameUseCases.findAllPendingPartyTurnsByPlayerId(self.id);
 	if (pendingPartyTurns.length > 0) {
-		redirect(302, `/`);
+		redirect(302, resolve('/'));
 	}
 
 	// Allow multiple party creation (removed restriction)
@@ -66,7 +67,7 @@ export const actions = {
 		const pendingPartyTurns = await GameUseCases.findAllPendingPartyTurnsByPlayerId(userId);
 		if (pendingPartyTurns.length > 0) {
 			// User has pending party turns, redirect to the stalest one
-			redirect(302, `/play/${pendingPartyTurns[0].id}`);
+			redirect(302, resolve('/play/[pendingTurnId]', { pendingTurnId: pendingPartyTurns[0].id }));
 		}
 
 		const form = await superValidate(request, zod4(partyCreationSchema));
@@ -110,6 +111,6 @@ export const actions = {
 		}
 
 		// Redirect to the new party page (outside try/catch)
-		redirect(302, `/s/${party.id}`);
+		redirect(302, resolve('/s/[seasonId]', { seasonId: party.id }));
 	}
 } satisfies Actions;

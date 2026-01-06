@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { PUBLIC_SITE_TITLE } from '$env/static/public';
+	import { resolve } from '$app/paths';
 	import SEO from '$lib/components/SEO.svelte';
 	const lastUpdated = 'July 2025';
 </script>
@@ -445,7 +446,7 @@
 			<h2>25. Contact Us</h2>
 			<p>
 				If you have any questions about this privacy policy or terms of service, please contact us
-				via our <a href="/info/contact">contact form</a>.
+				via our <a href={resolve('/info/contact')}>contact form</a>.
 			</p>
 		</section>
 	</div>

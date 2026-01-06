@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import type { GameWithTurns } from '$lib/types/domain';
 
 	interface Props {
@@ -9,7 +10,11 @@
 </script>
 
 <div class="card-bg game-card transition-shadow hover:shadow-lg">
-	<a href="/g/{game.id}" class="game-link" aria-label="View game with {game.completedCount} turns">
+	<a
+		href={resolve('/g/[gameId]', { gameId: game.id })}
+		class="game-link"
+		aria-label="View game with {game.completedCount} turns"
+	>
 		{#if game.turns.length > 0}
 			{@const posterTurn = game.posterTurnId
 				? game.turns.find((t) => t.id === game.posterTurnId)

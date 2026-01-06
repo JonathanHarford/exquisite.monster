@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
+	import { resolve, asset } from '$app/paths';
 	import { superForm } from 'sveltekit-superforms/client';
 	import { zod4 } from 'sveltekit-superforms/adapters';
 	import { partyCreationSchema } from '$lib/formSchemata';
@@ -38,6 +39,7 @@
 			It works just like playing it at a party with your friends: Each of you writes an opener, and
 			the games get passed around until everyone's played in every game!
 		</p>
+		<img src={asset('/img/epyc_party.svg')} alt="Party Mode" />
 		<p>
 			No time limits! Take as much time as you need to draw the perfect picture (or compose the
 			perfect piece of writing).
@@ -87,7 +89,7 @@
 				</div>
 
 				<div class="flex justify-end gap-3">
-					<a href="/account" class="btn">Cancel</a>
+					<a href={resolve('/account')} class="btn">Cancel</a>
 					<button class="btn btn-primary" type="submit" disabled={$submitting}>
 						{$submitting ? 'Creating...' : 'Create Party'}
 					</button>
@@ -111,7 +113,7 @@
 					</div>
 					<div class="flex items-center gap-2">
 						or...
-						<a href="/play" class="btn btn-primary"> Play (non-party) </a>
+						<a href={resolve('/play')} class="btn btn-link"> Play (non-party) </a>
 					</div>
 				</div>
 			</div>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import GameView from '$lib/components/GameView.svelte';
 	import type { PageProps } from './$types';
+	import { resolve } from '$app/paths';
 	import SEO from '$lib/components/SEO.svelte';
 	import GameAdminControls from './GameAdminControls.svelte';
 
@@ -39,7 +40,7 @@
 {#if gameCompletionMessage}
 	<div class="card mb-4">
 		<p>{gameCompletionMessage}</p>
-		<p>Until then, how about <a href="/play">playing a turn in another game?</a></p>
+		<p>Until then, how about <a href={resolve('/play')}>playing a turn in another game?</a></p>
 	</div>
 {/if}
 

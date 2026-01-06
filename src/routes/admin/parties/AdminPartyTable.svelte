@@ -9,6 +9,7 @@
 		Badge,
 		Progressbar
 	} from 'flowbite-svelte';
+	import { resolve } from '$app/paths';
 	import type { AdminUseCases } from '$lib/server/usecases/AdminUseCases';
 
 	const {
@@ -59,13 +60,13 @@
 			{#each partyList as party}
 				<tr>
 					<TableBodyCell>
-						<a href="/s/{party.id}" class="hover:underline" title="View party {party.title}">
+						<a href={resolve('/s/[seasonId]', { seasonId: party.id })} class="hover:underline" title="View party {party.title}">
 							{party.title}
 						</a>
 					</TableBodyCell>
 					<TableBodyCell>
 						<a
-							href="/p/{party.creator.id}"
+							href={resolve('/p/[playerId]', { playerId: party.creator.id })}
 							class="hover:underline"
 							title="View player {party.creator.username}"
 						>

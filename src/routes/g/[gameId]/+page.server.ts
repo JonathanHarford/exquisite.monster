@@ -1,5 +1,6 @@
 import { GameUseCases } from '$lib/server/usecases/GameUseCases';
 import { error, fail, redirect } from '@sveltejs/kit';
+import { resolve } from '$app/paths';
 import type { PageServerLoad, Actions } from './$types';
 import { getCommentsByGameId, createComment } from '$lib/server/services/gameService';
 import {
@@ -193,7 +194,7 @@ export const actions: Actions = {
 			return fail(500, { message: 'Failed to kill game' });
 		}
 
-		redirect(302, '/admin/games');
+		redirect(302, resolve('/admin/games'));
 	},
 
 	toggleLewd: async ({ params, locals }) => {
@@ -273,7 +274,7 @@ export const actions: Actions = {
 		}
 
 		if (!locals.auth().userId) {
-			redirect(302, '/');
+			redirect(302, resolve('/'));
 		}
 
 		await FlagUseCases.flagTurn(

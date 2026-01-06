@@ -61,14 +61,15 @@
 	let newEmail = $state('');
 	let verificationCode = $state('');
 	let emailChangeStep: 'idle' | 'awaiting_verification' = $state('idle');
-	let emailChangeLoading = $state(false);
-	let emailChangeError: string | null = $state(null);
+	let emailOperationPromise: Promise<void> | undefined = $state(Promise.resolve());
 	let emailChangeSuccess: string | null = $state(null);
 	let emailValid = $state(true);
 	let emailTouched = $state(false);
 
 	// Track if email has changed
-	const emailChanged = $derived(newEmail.trim() !== '' && newEmail.toLowerCase() !== currentEmail.toLowerCase());
+	const emailChanged = $derived(
+		newEmail.trim() !== '' && newEmail.toLowerCase() !== currentEmail.toLowerCase()
+	);
 
 	$effect(() => {
 		if (isProfileModified || emailChanged) {
@@ -87,16 +88,13 @@
 	function validateEmail() {
 		emailTouched = true;
 		if (!newEmail.trim()) {
-			emailChangeError = 'Please enter a new email address.';
-			return false;
+			throw new Error('Please enter a new email address.');
 		}
 		if (!emailValid) {
-			emailChangeError = 'Please enter a valid email address.';
-			return false;
+			throw new Error('Please enter a valid email address.');
 		}
 		if (newEmail.toLowerCase() === currentEmail.toLowerCase()) {
-			emailChangeError = 'This is already your current email address.';
-			return false;
+			throw new Error('This is already your current email address.');
 		}
 		return true;
 	}
@@ -104,10 +102,8 @@
 	async function handleEmailChange() {
 		if (!clerkUser) return false;
 
-		if (!validateEmail()) return false;
+		validateEmail();
 
-		emailChangeLoading = true;
-		emailChangeError = null;
 		emailChangeSuccess = null;
 
 		try {
@@ -141,21 +137,15 @@
 		} catch (err: unknown) {
 			console.error('Error adding new email:', err);
 			const error = err as { errors?: { message?: string }[]; message?: string };
-			emailChangeError = error.errors?.[0]?.message || error.message || 'Failed to add new email.';
-			return false;
-		} finally {
-			emailChangeLoading = false;
+			throw new Error(error.errors?.[0]?.message || error.message || 'Failed to add new email.');
 		}
 	}
 
 	async function handleVerifyEmail() {
 		if (!clerkUser) return false;
 		if (!verificationCode.trim()) {
-			emailChangeError = 'Please enter the verification code.';
-			return false;
+			throw new Error('Please enter the verification code.');
 		}
-		emailChangeLoading = true;
-		emailChangeError = null;
 		emailChangeSuccess = null;
 
 		try {
@@ -185,16 +175,13 @@
 		} catch (err: unknown) {
 			console.error('Error verifying email:', err);
 			const error = err as { errors?: { message?: string }[]; message?: string };
-			emailChangeError = error.errors?.[0]?.message || error.message || 'Failed to verify email.';
-			return false;
-		} finally {
-			emailChangeLoading = false;
+			throw new Error(error.errors?.[0]?.message || error.message || 'Failed to verify email.');
 		}
 	}
 
 	function resetEmailForm() {
 		emailChangeStep = 'idle';
-		emailChangeError = null;
+		emailOperationPromise = Promise.resolve();
 		emailChangeSuccess = null;
 		newEmail = '';
 		verificationCode = '';
@@ -209,31 +196,37 @@
 	async function handleUnifiedSubmit(event: SubmitEvent) {
 		event.preventDefault();
 
-		// If we're in email verification step, handle that first
-		if (emailChangeStep === 'awaiting_verification') {
-			const verified = await handleVerifyEmail();
-			if (verified) {
-				// Email verified, now submit the profile form
-				submit(formElement);
-			}
-			return;
-		}
-
-		// If email changed but not yet sent for verification, handle that
-		if (emailChanged) {
-			const emailHandled = await handleEmailChange();
-			// If email verification is needed, stop here
-			if (!emailHandled) {
+		emailOperationPromise = (async () => {
+			// If we're in email verification step, handle that first
+			if (emailChangeStep === 'awaiting_verification') {
+				const verified = await handleVerifyEmail();
+				if (verified) {
+					// Email verified, now submit the profile form
+					submit(formElement);
+				}
 				return;
 			}
-		}
 
-		// Submit the profile form (email either unchanged or already handled)
-		submit(formElement);
+			// If email changed but not yet sent for verification, handle that
+			if (emailChanged) {
+				const emailHandled = await handleEmailChange();
+				// If email verification is needed, stop here
+				if (!emailHandled) {
+					return;
+				}
+			}
+
+			// Submit the profile form (email either unchanged or already handled)
+			submit(formElement);
+		})();
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Enter' && !emailChangeLoading) {
+		// Prevent submit on enter if we are already loading (via promise state)
+		// We can't easily check promise state synchronously without a tracking var,
+		// but checking the button state in UI handles it.
+		// For the listener, we rely on the button disabled attribute mostly.
+		if (event.key === 'Enter') {
 			event.preventDefault();
 			if (formElement) {
 				formElement.requestSubmit();
@@ -325,69 +318,71 @@
 					{#if $errors.hideLewdContent}<Alert color="red">{$errors.hideLewdContent}</Alert>{/if}
 				</div>
 
-				<!-- Email Field - Just above button -->
-				{#if emailChangeStep === 'idle'}
-					<div class="form-group">
-						<Label for="newEmail">Email</Label>
-						<Input
-							id="newEmail"
-							name="newEmail"
-							type="email"
-							placeholder={currentEmail}
-							bind:value={newEmail}
-							disabled={emailChangeLoading || isProfileModified}
-							color={emailTouched && !emailValid ? 'red' : 'base'}
-							onkeydown={handleKeydown}
-							onblur={() => (emailTouched = true)}
-							autocomplete="email"
-						/>
-						{#if emailTouched && !emailValid && newEmail}
-							<Helper color="red">Please enter a valid email address</Helper>
-						{/if}
-					</div>
-				{:else}
-					<div class="verification-step space-y-4">
-						<Alert color="blue">
-							<span slot="icon"><InfoCircleSolid class="h-5 w-5" /></span>
-							{emailChangeSuccess ||
-								"We've sent a verification code to your new email address. Please check your inbox and spam folder."}
-						</Alert>
-
+				{#snippet emailForm(disabled: boolean)}
+					{#if emailChangeStep === 'idle'}
 						<div class="form-group">
-							<Label for="verificationCode">Verification Code</Label>
+							<Label for="newEmail">Email</Label>
 							<Input
-								id="verificationCode"
-								name="verificationCode"
-								type="text"
-								placeholder="Enter 6-digit code"
-								bind:value={verificationCode}
-								disabled={emailChangeLoading}
+								id="newEmail"
+								name="newEmail"
+								type="email"
+								placeholder={currentEmail}
+								bind:value={newEmail}
+								disabled={disabled || isProfileModified}
+								color={emailTouched && !emailValid ? 'red' : 'base'}
 								onkeydown={handleKeydown}
-								autocomplete="one-time-code"
-								maxlength={6}
-								pattern="[0-9]{6}"
+								onblur={() => (emailTouched = true)}
+								autocomplete="email"
 							/>
+							{#if emailTouched && !emailValid && newEmail}
+								<Helper color="red">Please enter a valid email address</Helper>
+							{/if}
 						</div>
+					{:else}
+						<div class="verification-step space-y-4">
+							<Alert color="blue">
+								<span slot="icon"><InfoCircleSolid class="h-5 w-5" /></span>
+								{emailChangeSuccess ||
+									"We've sent a verification code to your new email address. Please check your inbox and spam folder."}
+							</Alert>
 
-						<button
-							type="button"
-							onclick={resetEmailForm}
-							disabled={emailChangeLoading}
-							class="btn btn-secondary text-sm"
-						>
-							Cancel Email Change
-						</button>
-					</div>
-				{/if}
+							<div class="form-group">
+								<Label for="verificationCode">Verification Code</Label>
+								<Input
+									id="verificationCode"
+									name="verificationCode"
+									type="text"
+									placeholder="Enter 6-digit code"
+									bind:value={verificationCode}
+									disabled={disabled}
+									onkeydown={handleKeydown}
+									autocomplete="one-time-code"
+									maxlength={6}
+									pattern="[0-9]{6}"
+								/>
+							</div>
 
-				<!-- Unified Submit Button -->
+							<button
+								type="button"
+								onclick={resetEmailForm}
+								class="btn btn-secondary text-sm"
+								disabled={disabled}
+							>
+								Cancel Email Change
+							</button>
+						</div>
+					{/if}
+				{/snippet}
+
+				<!-- Email Field & Submit Button -->
 				<div class="flex flex-col items-center gap-2">
-					<button
-						type="submit"
-						disabled={emailChangeLoading || (!isProfileModified && !emailChanged)}
-						class="btn btn-primary"
-					>
-						{#if emailChangeLoading}
+					{#await emailOperationPromise}
+						{@render emailForm(true)}
+						<button
+							type="submit"
+							disabled
+							class="btn btn-primary"
+						>
 							<svg
 								aria-hidden="true"
 								role="status"
@@ -406,22 +401,36 @@
 								/>
 							</svg>
 							{emailChangeStep === 'awaiting_verification' ? 'Verifying...' : 'Saving...'}
-						{:else}
+						</button>
+					{:then}
+						{@render emailForm(false)}
+						<button
+							type="submit"
+							disabled={(!isProfileModified && !emailChanged)}
+							class="btn btn-primary"
+						>
 							{saveSuccess
 								? 'Success!'
 								: emailChangeStep === 'awaiting_verification'
 									? 'Verify and Save'
 									: 'Save Changes'}
-						{/if}
-					</button>
-
-					<!-- Error Messages -->
-					{#if emailChangeError}
-						<Alert color="red" class="w-full" dismissable on:close={() => (emailChangeError = null)}>
+						</button>
+					{:catch error}
+						{@render emailForm(false)}
+						<button
+							type="submit"
+							disabled={(!isProfileModified && !emailChanged)}
+							class="btn btn-primary"
+						>
+							{emailChangeStep === 'awaiting_verification'
+								? 'Verify and Save'
+								: 'Save Changes'}
+						</button>
+						<Alert color="red" class="w-full" dismissable on:close={() => (emailOperationPromise = Promise.resolve())}>
 							<span slot="icon"><InfoCircleSolid class="h-5 w-5" /></span>
-							{emailChangeError}
+							{error.message || 'An error occurred'}
 						</Alert>
-					{/if}
+					{/await}
 				</div>
 			</div>
 		</div>

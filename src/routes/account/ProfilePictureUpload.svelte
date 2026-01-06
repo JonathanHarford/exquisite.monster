@@ -20,8 +20,8 @@
 	const clerkContext = useClerkContext();
 
 	// State management
-	let isUploading = $state(false);
-	let isProcessing = $state(false);
+	let currentOperationPromise = $state<Promise<void> | null>(null);
+	let operationStatus = $state<'idle' | 'processing' | 'uploading'>('idle');
 	let isDragOver = $state(false);
 	// svelte-ignore state_referenced_locally
 	let previewUrl = $state(currentImageUrl);
@@ -83,17 +83,13 @@
 
 	// Process image using client-side processor
 	const processImage = async (file: File): Promise<ImageProcessingResult> => {
-		isProcessing = true;
-		try {
-			const result = await processProfilePicture(file);
-			return result;
-		} finally {
-			isProcessing = false;
-		}
+		operationStatus = 'processing';
+		return processProfilePicture(file);
 	};
 
 	// Enhanced upload with timeout and better error handling
 	const uploadFile = async (file: File): Promise<void> => {
+		operationStatus = 'uploading';
 		const formData = new FormData();
 		formData.append('file', file);
 
@@ -172,38 +168,38 @@
 			return;
 		}
 
-		try {
-			// Process image on client side
-			const processingResult = await processImage(file);
+		currentOperationPromise = (async () => {
+			try {
+				// Process image on client side (updates status to 'processing')
+				const processingResult = await processImage(file);
 
-			if (!processingResult.success) {
-				uploadError = processingResult.error || 'Failed to process image';
+				if (!processingResult.success) {
+					throw new Error(processingResult.error || 'Failed to process image');
+				}
+
+				// Set processed file and preview
+				processedFile = processingResult.file;
+				previewUrl = processingResult.previewUrl ?? undefined;
+
+				// Upload processed file (updates status to 'uploading')
+				if (processedFile) {
+					await uploadFile(processedFile);
+				}
+			} catch (error) {
+				// Reset preview on error
 				previewUrl = currentImageUrl;
+				uploadError = error instanceof Error ? error.message : 'Upload failed. Please try again.';
 				clearMessages();
-				return;
+				throw error; // Re-throw to ensure the promise rejects
+			} finally {
+				// Clear file input to allow re-uploading the same file
+				if (fileInput) {
+					fileInput.value = '';
+				}
+				currentOperationPromise = null; // Clear promise when done
+				operationStatus = 'idle';
 			}
-
-			// Set processed file and preview
-			processedFile = processingResult.file;
-			previewUrl = processingResult.previewUrl ?? undefined;
-
-			// Upload processed file
-			if (processedFile) {
-				isUploading = true;
-				await uploadFile(processedFile);
-			}
-		} catch (error) {
-			// Reset preview on error
-			previewUrl = currentImageUrl;
-			uploadError = error instanceof Error ? error.message : 'Upload failed. Please try again.';
-			clearMessages();
-		} finally {
-			isUploading = false;
-			// Clear file input to allow re-uploading the same file
-			if (fileInput) {
-				fileInput.value = '';
-			}
-		}
+		})();
 	};
 
 	// Handle file input change
@@ -259,7 +255,7 @@
 
 	// Handle keyboard navigation
 	const handleKeyDown = (event: KeyboardEvent) => {
-		if ((event.key === 'Enter' || event.key === ' ') && !isUploading && !isProcessing) {
+		if ((event.key === 'Enter' || event.key === ' ') && !currentOperationPromise) {
 			event.preventDefault();
 			fileInput.click();
 		}
@@ -300,15 +296,15 @@
 				src={previewUrl}
 				alt={`${username}'s profile picture`}
 				size="xl"
-				class={`ring-4 ring-primary-100 transition-all duration-200 group-hover:ring-primary-300 ${isDragOver ? 'ring-primary-300' : ''} ${isUploading || isProcessing ? 'opacity-75' : ''}`}
+				class={`ring-4 ring-primary-100 transition-all duration-200 group-hover:ring-primary-300 ${isDragOver ? 'ring-primary-300' : ''} ${currentOperationPromise ? 'opacity-75' : ''}`}
 			/>
 
 			<!-- Upload overlay -->
 			<div
 				class="upload-overlay absolute inset-0 transition-opacity duration-200"
-				class:opacity-0={!isDragOver && !isUploading && !isProcessing}
+				class:opacity-0={!isDragOver && !currentOperationPromise}
 				class:opacity-100={isDragOver}
-				class:group-hover:opacity-100={!isDragOver && !isUploading && !isProcessing}
+				class:group-hover:opacity-100={!isDragOver && !currentOperationPromise}
 				ondragover={handleDragOver}
 				ondragenter={handleDragEnter}
 				ondragleave={handleDragLeave}
@@ -322,19 +318,24 @@
 				<label
 					for="profile-picture-input"
 					class="upload-label flex h-full w-full cursor-pointer items-center justify-center"
-					class:cursor-not-allowed={isUploading || isProcessing}
+					class:cursor-not-allowed={currentOperationPromise}
 				>
 					<div class="upload-message">
-						{#if isProcessing}
-							<div class="flex flex-col items-center text-white">
-								<Spinner color="white" class="mb-1" size="6" />
-								<span class="text-sm">Processing...</span>
-							</div>
-						{:else if isUploading}
-							<div class="flex flex-col items-center text-white">
-								<Spinner color="white" class="mb-1" size="6" />
-								<span class="text-sm">Uploading...</span>
-							</div>
+						{#if currentOperationPromise}
+							{#await currentOperationPromise}
+								<div class="flex flex-col items-center text-white">
+									<Spinner color="white" class="mb-1" size="6" />
+									<span class="text-sm">
+										{#if operationStatus === 'processing'}
+											Processing...
+										{:else if operationStatus === 'uploading'}
+											Uploading...
+										{:else}
+											Please wait...
+										{/if}
+									</span>
+								</div>
+							{/await}
 						{:else if isDragOver}
 							<div class="flex flex-col items-center text-white">
 								<iconify-icon
@@ -372,7 +373,7 @@
 						accept={ACCEPTED_TYPES.join(',')}
 						onchange={handleFileInputChange}
 						class="sr-only"
-						disabled={isUploading || isProcessing}
+						disabled={!!currentOperationPromise}
 						aria-label="Select profile picture file"
 					/>
 				</form>

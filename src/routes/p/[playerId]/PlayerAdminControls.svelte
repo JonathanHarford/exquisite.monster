@@ -17,6 +17,7 @@
 		Modal
 	} from 'flowbite-svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import type { PageData, ActionData } from './$types';
 
 	const { data, form } = $props<{ data: PageData; form: any }>();
@@ -35,7 +36,7 @@
 	// Handle successful deletion by redirecting to players list
 	$effect(() => {
 		if (form && typeof form === 'object' && 'deleted' in form && form.deleted) {
-			goto('/admin/players');
+			goto(resolve('/admin/players'));
 		}
 	});
 
@@ -209,7 +210,7 @@
 							{#each playerDetails.turns as turn}
 								<tr>
 									<TableBodyCell>
-										<a href="/g/{turn.game.id}" class="hover:underline">
+										<a href={resolve('/g/[gameId]', { gameId: turn.game.id })} class="hover:underline">
 											{turn.game.id}
 										</a>
 									</TableBodyCell>
@@ -239,7 +240,7 @@
 										{/if}
 									</TableBodyCell>
 									<TableBodyCell>
-										<a href="/g/{turn.game.id}" class="view-button">
+										<a href={resolve('/g/[gameId]', { gameId: turn.game.id })} class="view-button">
 											<iconify-icon icon="material-symbols:visibility"></iconify-icon>
 											View Game
 										</a>
@@ -270,12 +271,12 @@
 							{#each playerDetails.turnFlags as flag}
 								<tr>
 									<TableBodyCell>
-										<a href="/g/{flag.turn.game.id}" class="hover:underline">
+										<a href={resolve('/g/[gameId]', { gameId: flag.turn.game.id })} class="hover:underline">
 											{flag.turn.game.id}
 										</a>
 									</TableBodyCell>
 									<TableBodyCell>
-										<a href="/p/{flag.turn.player.id}" class="hover:underline">
+										<a href={resolve('/p/[playerId]', { playerId: flag.turn.player.id })} class="hover:underline">
 											{flag.turn.player.username}
 										</a>
 									</TableBodyCell>
@@ -293,7 +294,7 @@
 										{/if}
 									</TableBodyCell>
 									<TableBodyCell>
-										<a href="/g/{flag.turn.game.id}" class="view-button">
+										<a href={resolve('/g/[gameId]', { gameId: flag.turn.game.id })} class="view-button">
 											<iconify-icon icon="material-symbols:visibility"></iconify-icon>
 											View
 										</a>

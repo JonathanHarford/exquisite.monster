@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { PUBLIC_SITE_TITLE } from '$env/static/public';
+	import { resolve } from '$app/paths';
 	import GameView from '$lib/components/GameView.svelte';
 	import type { PageProps } from './$types';
 	import SEO from '$lib/components/SEO.svelte';
@@ -87,10 +88,10 @@
 			<p>
 				The <em>funnest</em> way to play <b>Eat Poop You Cat</b> is at a party with your
 				friends, and each player writes their sentence on a piece of paper and then they all get passed around. 
-				<a href="/s/new">Party Mode</a> captures that experience!
+				<a href={resolve('/s/new')}>Party Mode</a> captures that experience!
 			</p>
 		</section>
-		<a href="/play" class="btn btn-primary mx-auto">I'm sold. Let's do this.</a>
+		<a href={resolve('/play')} class="btn btn-primary mx-auto">I'm sold. Let's do this.</a>
 	</div>
 </div>
 

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+
 	interface Party {
 		id: string;
 		title: string;
@@ -58,7 +60,7 @@
 		{#each parties as party}
 			<tr class:pending-turn={party.hasPendingTurn}>
 				<td>
-					<a href="/s/{party.id}" class="party-link">
+					<a href={resolve('/s/[seasonId]', { seasonId: party.id })} class="party-link">
 						{party.title}
 					</a>
 				</td>

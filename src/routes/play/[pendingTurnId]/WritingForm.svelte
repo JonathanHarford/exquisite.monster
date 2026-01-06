@@ -1,27 +1,38 @@
 <script lang="ts">
-	import { enhance, applyAction } from '$app/forms';
-	import type { ActionResult } from '@sveltejs/kit';
 	import { page } from '$app/state';
 	import { appState } from '$lib/appstate.svelte';
-
-	const enhanceWritingForm = () => {
-		appState.ui.loading = true;
-		return async ({ result }: { result: ActionResult }) => {
-			appState.ui.loading = false;
-			// If the server action for writing redirects on error,
-			// this applyAction might not show an error on *this* page
-			// as the page will navigate away. But if the action used fail(),
-			// this would populate the form store for +page.svelte.
-			await applyAction(result);
-		};
-	};
+	import { submitWriting } from './submit.remote';
 
 	const isLewdGame = $derived(page.data.pendingGame?.isLewd || false);
+	let error = $state<string | null>(null);
 </script>
 
-<form method="POST" action="?/submitWriting" class="form-writing" use:enhance={enhanceWritingForm}>
+<form
+	{...submitWriting.enhance(async (opts) => {
+		appState.ui.loading = true;
+		error = null;
+		try {
+			await opts.submit();
+			// Check for action failure in the result
+			const result = submitWriting.result as any;
+			if (result?.type === 'failure') {
+				error = result?.data?.error || 'Submission failed';
+			}
+		} catch (e) {
+			console.error(e);
+			error = 'An unexpected error occurred';
+		} finally {
+			appState.ui.loading = false;
+		}
+	})}
+	class="form-writing"
+>
 	<input type="hidden" name="type" value="writing" />
 	<textarea name="content" rows="3" placeholder="Write your description here..."></textarea>
+
+	{#if error}
+		<div class="text-red-500 text-sm text-center">{error}</div>
+	{/if}
 
 	<button type="submit" class="btn btn-primary mx-auto" disabled={appState.ui.loading}>
 		{appState.ui.loading ? 'Submitting...' : 'Submit Turn'}

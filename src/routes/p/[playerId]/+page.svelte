@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Avatar, Badge, Button, ButtonGroup } from 'flowbite-svelte';
 	import DateComponent from '$lib/components/DateComponent.svelte';
+	import { resolve } from '$app/paths';
 	import FavoriteButton from '$lib/components/FavoriteButton.svelte';
 	import Speechbubble from '$lib/components/Speechbubble.svelte';
 	import GameCard from '$lib/components/GameCard.svelte';
@@ -131,7 +132,7 @@
 					</p>
 					{#if data.isOwnProfile}
 						<p class="text-sm">
-							<a href="/g" class="link">Explore games</a> and click the favorite button to add them here.
+							<a href={resolve('/g')} class="link">Explore games</a> and click the favorite button to add them here.
 						</p>
 					{/if}
 				</div>
@@ -180,7 +181,7 @@
 			{#if 'players' in data && data.players && Array.isArray(data.players) && data.players.length > 0}
 				<div class="flex flex-wrap gap-3">
 					{#each data.players as player}
-						<a href="/p/{player.id}" class="favorite-player-avatar">
+						<a href={resolve('/p/[playerId]', { playerId: player.id })} class="favorite-player-avatar">
 							<Avatar
 								src={player.imageUrl}
 								data-name={player.username}

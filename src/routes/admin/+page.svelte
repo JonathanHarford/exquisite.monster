@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import type { PageData } from './$types';
 	import {
 		Heading,
@@ -13,7 +14,7 @@
 
 	let { data }: { data: PageData } = $props();
 
-	let { events } = $derived(data);
+	let { events, pendingJobCount } = $derived(data);
 
 	function formatEventType(type: string) {
 		return type.replace(/([A-Z])/g, ' $1').trim(); // Add space before caps
@@ -24,8 +25,16 @@
 	<title>Admin Dashboard</title>
 </svelte:head>
 
-<div class="admin-dashboard">
-	<Heading tag="h2">Admin Dashboard</Heading>
+<div class="admin-dashboard p-4">
+	<div class="mb-6 flex items-center justify-between">
+		<Heading tag="h2">Admin Dashboard</Heading>
+
+		<form method="POST" action="?/processJobs" use:enhance>
+			<button class="btn btn-cta" type="submit" disabled={pendingJobCount === 0}>
+				Process {pendingJobCount} Jobs
+			</button>
+		</form>
+	</div>
 	<div class="card-bg">
 		<Heading tag="h3">Recent Activity</Heading>
 		<div class="overflow-x-auto">

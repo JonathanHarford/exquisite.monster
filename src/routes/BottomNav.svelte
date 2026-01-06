@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { SignedIn, SignedOut, SignInButton } from 'svelte-clerk';
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import CtaButton from '$lib/components/CtaButton.svelte';
 	import type { Player } from '$lib/types/domain';
 	import AvatarMenu from '$lib/components/AvatarMenu.svelte';
@@ -11,7 +12,7 @@
 
 <nav class="fixed bottom-0 left-0 z-30 grid h-16 w-full grid-cols-3 md:hidden">
 	<SignedIn>
-		<a href="/g" class="btn btn-primary flex h-full items-center justify-center"> Gallery </a>
+		<a href={resolve('/g')} class="btn btn-primary flex h-full items-center justify-center"> Gallery </a>
 		<div class="flex h-full">
 			<CtaButton user={player} />
 		</div>
@@ -19,9 +20,9 @@
 	</SignedIn>
 	<SignedOut>
 		<a
-			href="/g"
+			href={resolve('/g')}
 			class="btn btn-primary flex h-full items-center justify-center"
-			class:opacity-75={activeUrl !== '/g'}
+			class:opacity-75={activeUrl !== resolve('/g')}
 		>
 			Gallery
 		</a>

@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { SignedIn, SignedOut, SignUpButton } from 'svelte-clerk';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import SEO from '$lib/components/SEO.svelte';
 	import SuccessModal from '$lib/components/SuccessModal.svelte';
+	import GameGallery from '$lib/components/GameGallery.svelte';
+	import type { PageProps } from './$types';
 
 	import { PUBLIC_SITE_TITLE } from '$env/static/public';
+
+	const { data }: PageProps = $props();
 
 	// Check if we're coming from a successful flag action
 	const showFlagSuccess = $derived(page.url.searchParams.get('flagSuccess') === 'true');
@@ -59,9 +64,9 @@
 			<div>⁉️</div>
 		</div>
 		<div class="mx-auto mb-3 flex items-baseline gap-4">
-			<a href="/info/about" class="btn btn-primary">How To Play</a>
+			<a href={resolve('/info/about')} class="btn btn-primary">How To Play</a>
 			<SignedIn>
-				<a href="/play" class="btn btn-primary" aria-label="Play"> Play </a>
+				<a href={resolve('/play')} class="btn btn-primary" aria-label="Play"> Play </a>
 			</SignedIn>
 			<SignedOut>
 				<SignUpButton mode="modal">
@@ -74,4 +79,6 @@
 			you'll be asked to play <i>a single turn</i> of writing or drawing.
 		</p>
 	</section>
+	<a href={resolve('/g')}><h2 class="mt-12">Past Games</h2></a>
+	<GameGallery games={data.games || []} />
 </div>

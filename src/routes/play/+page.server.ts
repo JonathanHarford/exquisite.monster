@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+import { resolve } from '$app/paths';
 import type { Actions, PageServerLoad } from './$types';
 import { GameUseCases } from '$lib/server/usecases/GameUseCases';
 import type { Turn } from '$lib/types/domain';
@@ -6,13 +7,13 @@ import type { Turn } from '$lib/types/domain';
 export const load: PageServerLoad = async ({ locals, parent }) => {
 	const userId = locals.auth().userId;
 	if (!userId) {
-		redirect(302, '/');
+		redirect(302, resolve('/'));
 	}
 
-	// Check if user has pending party turns - redirect to stalest party turn
-	const pendingPartyTurns = await GameUseCases.findAllPendingPartyTurnsByPlayerId(userId);
-	if (pendingPartyTurns.length > 0) {
-		redirect(302, `/play/${pendingPartyTurns[0].id}`);
+	// Check if user has pending turns - redirect to stalest valid turn
+	const pendingTurn = await GameUseCases.findStalestValidPendingTurn(userId);
+	if (pendingTurn) {
+		redirect(302, resolve('/play/[pendingTurnId]', { pendingTurnId: pendingTurn.id }));
 	}
 
 	// Get user data from parent layout
@@ -29,14 +30,14 @@ export const actions = {
 	startTurn: async ({ locals, request }) => {
 		const userId = locals.auth().userId;
 		if (!userId) {
-			redirect(302, '/');
+			redirect(302, resolve('/'));
 		}
 
-		// Check if user has pending party turns - redirect to stalest party turn
-		const pendingPartyTurns = await GameUseCases.findAllPendingPartyTurnsByPlayerId(userId);
-		if (pendingPartyTurns.length > 0) {
-			// User has pending party turns, redirect to the stalest one
-			redirect(302, `/play/${pendingPartyTurns[0].id}`);
+		// Check if user has pending turns - redirect to stalest valid turn
+		const pendingTurn = await GameUseCases.findStalestValidPendingTurn(userId);
+		if (pendingTurn) {
+			// User has pending turns, redirect to the stalest one
+			redirect(302, resolve('/play/[pendingTurnId]', { pendingTurnId: pendingTurn.id }));
 		}
 
 		const formData = await request.formData();
@@ -61,8 +62,8 @@ export const actions = {
 		} catch (error) {
 			// If there's an error (like "Pending game found"), redirect to check status
 			console.error('Error creating turn:', error);
-			redirect(302, '/play');
+			redirect(302, resolve('/play'));
 		}
-		redirect(302, `/play/${turn.id}`);
+		redirect(302, resolve('/play/[pendingTurnId]', { pendingTurnId: turn.id }));
 	}
 } satisfies Actions;

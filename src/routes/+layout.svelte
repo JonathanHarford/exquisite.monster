@@ -11,6 +11,7 @@
 	import NotificationListener from '$lib/components/NotificationListener.svelte';
 	import { appState } from '$lib/appstate.svelte';
 	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
+	import { resolve, asset } from '$app/paths';
 	// import Debug from '$lib/components/Debug.svelte'; // Unused
 	import type { PageData } from './$types';
 	import AvatarMenu from '$lib/components/AvatarMenu.svelte';
@@ -25,7 +26,8 @@
 	import { SETTINGS } from '$lib/constants';
 	import AdminNav from '$lib/components/AdminNav.svelte';
 	import InvitationAlert from '$lib/components/InvitationAlert.svelte';
-import AuthRecovery from '$lib/components/AuthRecovery.svelte';
+	import AuthRecovery from '$lib/components/AuthRecovery.svelte';
+	import logo from '$lib/assets/img/exmo-logo.png';
 
 	const { data, children }: { data: PageData; children: Snippet } = $props();
 	const { pendingGame, pendingTurn, pendingPartyTurnCount } = $derived(data);
@@ -80,17 +82,17 @@ import AuthRecovery from '$lib/components/AuthRecovery.svelte';
 
 			if (timeRemaining <= 0) {
 				// If the turn has already expired, redirect immediately.
-				goto('/?e=turnExpired', { invalidate: ['self'] });
+				goto(resolve('/') + '?e=turnExpired', { invalidate: ['self'] });
 				return; // Stop further execution in this effect
 			}
 
 			currentMainTimer = new Timer(timeRemaining, () => {
-				appState.audio = '/audio/alarm.wav';
+				appState.audio = asset('/audio/alarm.wav');
 				appState.ui.timerSoon = false;
-				goto('/?e=turnExpired', { invalidate: ['self'] });
+				goto(resolve('/') + '?e=turnExpired', { invalidate: ['self'] });
 			});
 			warningTimer = new Timer((3 * timeRemaining) / 4, () => {
-				appState.audio = '/audio/stopwatch.wav';
+				appState.audio = asset('/audio/stopwatch.wav');
 				appState.ui.timerSoon = true;
 			});
 		}
@@ -118,10 +120,10 @@ import AuthRecovery from '$lib/components/AuthRecovery.svelte';
 	<!-- <SoundPlayer /> -->
 	<div class="flex min-h-screen flex-col">
 		<Navbar shadow class="mb-2 bg-gradient-to-r from-primary-100 to-warning-100 py-0">
-			<NavBrand href="/">
-				<enhanced:img
-					src="$lib/assets/img/exmo-logo.png?w=64"
-					class="logo mr-2"
+			<NavBrand href={resolve('/')}>
+				<img
+					src={logo}
+					class="logo mr-2 w-16"
 					class:spinning={appState.ui.loading}
 					alt="Logo"
 				/>
@@ -140,7 +142,7 @@ import AuthRecovery from '$lib/components/AuthRecovery.svelte';
 
 			<!-- Desktop Navigation -->
 			<NavUl ulClass="hidden md:flex flex-row items-center gap-4">
-				<NavLi href="/g">Gallery</NavLi>
+				<NavLi href={resolve('/g')}>Gallery</NavLi>
 				<SignedIn>
 					<AuthListener playerId={data.self?.id} />
 					<NotificationListener />

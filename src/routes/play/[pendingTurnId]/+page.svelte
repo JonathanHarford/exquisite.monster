@@ -58,9 +58,6 @@
 		<div class="hidden" data-testid="timeout">{pendingGame?.config.drawingTimeout}</div>
 		<DrawingForm />
 	{/if}
-	{#if form?.error}
-		<ErrorBox><p>{form.error}</p></ErrorBox>
-	{/if}
 
 	<Debug value={previousTurn} />
 	<Debug value={pendingTurn} />

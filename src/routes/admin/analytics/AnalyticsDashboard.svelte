@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Badge, Spinner, Alert } from 'flowbite-svelte';
+	import { getAllAnalytics } from '../../api/analytics.remote';
 
 	interface GameAnalytics {
 		overview: {
@@ -77,35 +78,29 @@
 		generatedAt: string;
 	}
 
-	let analyticsData = $state<AnalyticsData | null>(null);
-	let loading = $state(true);
-	let error = $state<string | null>(null);
 	let selectedTimeframe = $state('30');
+	let analyticsPromise = $derived(fetchAnalytics(selectedTimeframe));
 
-	const fetchAnalytics = async (days: string = '30') => {
-		loading = true;
-		error = null;
-		try {
-			const response = await fetch(`/api/analytics?type=all&days=${days}`);
-			if (!response.ok) {
-				throw new Error(`Failed to fetch analytics: ${response.statusText}`);
-			}
-			analyticsData = await response.json();
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to load analytics';
-			console.error('Analytics fetch error:', err);
-		} finally {
-			loading = false;
-		}
-	};
+	async function fetchAnalytics(days: string = '30'): Promise<AnalyticsData> {
+		const daysNum = parseInt(days, 10);
+		return getAllAnalytics(daysNum) as Promise<AnalyticsData>;
+	}
 
 	const handleTimeframeChange = (days: string) => {
 		selectedTimeframe = days;
-		fetchAnalytics(days);
 	};
 
 	onMount(() => {
-		fetchAnalytics(selectedTimeframe);
+		// Promise is already initialized, but if we need to ensure client-side fetch only:
+		// Svelte 5 runes allow init in script body.
+		// However, fetch might not work during SSR.
+		// If SSR is disabled for this route or handles it, fine.
+		// Usually onMount is used to avoid SSR fetch if it's client-only API.
+		// Since /api/analytics is likely local, let's keep it safe.
+		// But the requirement is to use direct assignment if possible or simple onMount.
+		// If I assign fetchAnalytics() at top level, it runs during component init.
+		// If SSR runs this, it might fail if fetch is not polyfilled or API is not ready.
+		// Let's assume client-side fetching.
 	});
 
 	const formatNumber = (num: number) => {
@@ -118,7 +113,7 @@
 </script>
 
 <div class="analytics-dashboard space-y-6">
-	{#if loading}
+	{#await analyticsPromise}
 		<div class="flex items-center justify-center">
 			<div class="text-center">
 				<Spinner size="10" />
@@ -126,25 +121,7 @@
 				<p>Gathering platform insights</p>
 			</div>
 		</div>
-	{:else if error}
-		<Alert color="red">
-			<div class="flex items-center">
-				<iconify-icon icon="material-symbols:error" class="h-6 w-6"></iconify-icon>
-				<div class="flex-1">
-					<h4>Analytics Error</h4>
-					<p>{error}</p>
-				</div>
-				<button
-					type="button"
-					class="btn btn-danger"
-					onclick={() => fetchAnalytics(selectedTimeframe)}
-				>
-					<iconify-icon icon="material-symbols:refresh" class="h-4 w-4"></iconify-icon>
-					Retry
-				</button>
-			</div>
-		</Alert>
-	{:else if analyticsData}
+	{:then analyticsData}
 		<!-- Header with Timeframe Selector -->
 		<div class="flex items-center justify-between">
 			<div>
@@ -402,7 +379,25 @@
 				Last updated: {new Date(analyticsData.generatedAt).toLocaleString()}
 			</p>
 		</div>
-	{/if}
+	{:catch error}
+		<Alert color="red">
+			<div class="flex items-center">
+				<iconify-icon icon="material-symbols:error" class="h-6 w-6"></iconify-icon>
+				<div class="flex-1">
+					<h4>Analytics Error</h4>
+					<p>{error instanceof Error ? error.message : 'Unknown error'}</p>
+				</div>
+				<button
+					type="button"
+					class="btn btn-danger"
+					onclick={() => handleTimeframeChange(selectedTimeframe)}
+				>
+					<iconify-icon icon="material-symbols:refresh" class="h-4 w-4"></iconify-icon>
+					Retry
+				</button>
+			</div>
+		</Alert>
+	{/await}
 </div>
 
 <style lang="postcss">

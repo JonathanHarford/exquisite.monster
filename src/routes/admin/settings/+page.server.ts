@@ -1,4 +1,5 @@
 import { redirect, fail } from '@sveltejs/kit';
+import { resolve } from '$app/paths';
 import { prisma } from '$lib/server/prisma';
 import { superValidate, message } from 'sveltekit-superforms/server';
 import { zod4 } from 'sveltekit-superforms/adapters';
@@ -16,7 +17,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		: null;
 
 	if (!player?.isAdmin) {
-		throw redirect(302, '/');
+		throw redirect(302, resolve('/'));
 	}
 
 	const config = await fetchDefaultGameConfig();

@@ -2,8 +2,6 @@
 	import { onMount } from 'svelte';
 	import { appState } from '$lib/appstate.svelte';
 	import { Skvetchy } from 'skvetchy';
-	import { applyAction, enhance } from '$app/forms';
-	import type { ActionResult } from '@sveltejs/kit';
 	import { Button } from 'flowbite-svelte';
 	import { processPDF, type PDFProcessingResult } from '$lib/client/pdfProcessor';
 	import {
@@ -15,6 +13,7 @@
 	import { FILE_UPLOAD, formatFileSize, getAcceptedFileTypesString } from '$lib/constants';
 	import ErrorBox from '$lib/components/ErrorBox.svelte';
 	import { page } from '$app/state';
+	import { submitDrawing } from './submit.remote';
 
 	let mode: 'upload' | 'draw' = $state('upload');
 	let skvetchyComponent: Skvetchy | null = $state(null);
@@ -23,6 +22,7 @@
 	let previewUrl: string | null = $state(null);
 	let isProcessing: boolean = $state(false);
 	let processingError: string | null = $state(null);
+	let submissionError: string | null = $state(null);
 	let originalFileName: string | null = $state(null);
 	let hasEnteredDrawMode: boolean = $state(false);
 
@@ -30,6 +30,7 @@
 
 	function clearError() {
 		processingError = null;
+		submissionError = null;
 	}
 
 	function handleFileSelect(event: Event) {
@@ -138,55 +139,45 @@
 		}
 	}
 
-	const enhanceForm = ({ formData }: { formData: FormData }) => {
-		// If we have a resized file, replace the form data
-		if (selectedFile) {
-			formData.set('file', selectedFile);
-		}
-
-		appState.ui.loading = true;
-
-		return async ({ result }: { result: ActionResult }) => {
-			appState.ui.loading = false;
-			await applyAction(result);
-		};
-	};
-
 	async function handleSkvetchyExport() {
 		if (skvetchyComponent) {
 			appState.ui.loading = true;
+			submissionError = null;
 			try {
 				const blob = await skvetchyComponent.exportToPNG();
 				if (blob) {
 					const formData = new FormData();
 					formData.append('file', blob, 'drawing.png');
 
-					const response = await fetch('?/submitDrawing', {
+					// Manual submission to remote form action
+					const response = await fetch(submitDrawing.action, {
 						method: 'POST',
 						body: formData
 					});
 
-					appState.ui.loading = false;
-					const contentType = response.headers.get('content-type');
-
-					if (contentType && contentType.includes('application/json')) {
-						const result = await response.json();
-						applyAction(result);
-					} else {
-						if (response.redirected || response.status === 302 || response.status === 303) {
-							window.location.href = response.url || '/';
-						} else {
-							console.error('Unexpected response type:', response);
-							alert(
-								'Submission completed but response was unexpected. Please check if your drawing was submitted.'
-							);
+					if (response.redirected || response.status === 302 || response.status === 303) {
+						window.location.href = response.url || '/';
+					} else if (!response.ok) {
+						// Try to parse error
+						try {
+							const result = await response.json();
+							if (result?.type === 'failure') {
+								submissionError = result?.data?.error || 'Submission failed';
+							} else if (result?.error) {
+								submissionError = result.error.message || 'Submission failed';
+							} else {
+								submissionError = 'Submission failed';
+							}
+						} catch {
+							submissionError = 'Submission failed';
 						}
 					}
 				}
 			} catch (error) {
-				appState.ui.loading = false;
 				console.error('Skvetchy export or upload failed:', error);
-				alert('Failed to export or upload drawing. Please try again.');
+				submissionError = 'Failed to export or upload drawing. Please try again.';
+			} finally {
+				appState.ui.loading = false;
 			}
 		}
 	}
@@ -230,10 +221,29 @@
 {#if mode === 'upload'}
 	<div class="upload-container">
 		<form
-			method="POST"
-			action="?/submitDrawing"
+			{...submitDrawing.enhance(async (opts) => {
+				// If we have a resized file, replace the form data
+				if (selectedFile) {
+					opts.data.file = selectedFile;
+				}
+
+				appState.ui.loading = true;
+				submissionError = null;
+				try {
+					await opts.submit();
+					// Check for action failure in the result
+					const result = submitDrawing.result as any;
+					if (result?.type === 'failure') {
+						submissionError = result?.data?.error || 'Submission failed';
+					}
+				} catch (e) {
+					console.error(e);
+					submissionError = 'An unexpected error occurred';
+				} finally {
+					appState.ui.loading = false;
+				}
+			})}
 			enctype="multipart/form-data"
-			use:enhance={enhanceForm}
 		>
 			<div class="file-upload-area">
 				<input
@@ -311,6 +321,9 @@
 			{#if processingError}
 				<ErrorBox><p>{processingError}</p></ErrorBox>
 			{/if}
+			{#if submissionError}
+				<ErrorBox><p>{submissionError}</p></ErrorBox>
+			{/if}
 
 			{#if previewUrl}
 				<div class="preview-container">
@@ -352,6 +365,9 @@
 				>But it's better to upload...</button
 			>
 		</div>
+		{#if submissionError}
+			<ErrorBox><p>{submissionError}</p></ErrorBox>
+		{/if}
 		<div class="mt-4 flex justify-center">
 			<Button color="green" onclick={handleSkvetchyExport} disabled={appState.ui.loading}>
 				{appState.ui.loading ? 'Submitting...' : 'Submit Drawing'}

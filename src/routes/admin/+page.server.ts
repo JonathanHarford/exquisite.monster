@@ -3,12 +3,25 @@ import { getRecentEvents } from '$lib/server/eventService';
 import type { Actions } from './$types';
 import { GameUseCases } from '$lib/server/usecases/GameUseCases'; // Keep if actions are still relevant to this page
 
+import { prisma } from '$lib/server/prisma';
+import { env } from '$env/dynamic/private';
+
 export const load: PageServerLoad = async () => {
 	// const metrics = await getDashboardMetrics();
 	const events = await getRecentEvents(20); // Load 20 most recent events
 
+	const pendingJobCount = await prisma.job.count({
+		where: {
+			status: 'pending',
+			runAt: {
+				lte: new Date()
+			}
+		}
+	});
+
 	return {
-		events
+		events,
+		pendingJobCount
 	};
 };
 
@@ -32,6 +45,25 @@ export const actions: Actions = {
 			console.error('Error deleting game:', error);
 			return { success: false, error: 'Failed to delete game' };
 		}
+	},
+
+	processJobs: async ({ fetch }) => {
+		const headers: Record<string, string> = {};
+		if (env.CRON_SECRET) {
+			headers['Authorization'] = `Bearer ${env.CRON_SECRET}`;
+		}
+
+		try {
+			const response = await fetch('/api/cron/process-jobs', { headers });
+			if (!response.ok) {
+				const errorData = await response.json();
+				return { success: false, error: errorData.error || 'Failed to trigger cron API' };
+			}
+			const result = await response.json();
+			return { success: true, ...result };
+		} catch (error) {
+			console.error('Error triggering job processing API:', error);
+			return { success: false, error: 'Failed to process jobs' };
+		}
 	}
-	// Add other general admin actions here if needed
 } satisfies Actions;

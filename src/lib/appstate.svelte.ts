@@ -2,6 +2,7 @@ import type { Game, Notification, Turn } from './types/domain';
 import { PUBLIC_SITE_TITLE } from '$env/static/public';
 import type { Timer } from './Timer.svelte';
 import { browser } from '$app/environment';
+import { NotificationStore } from '$lib/stores/notifications.svelte';
 
 export const appState = $state<{
 	ui: {
@@ -17,13 +18,7 @@ export const appState = $state<{
 	};
 	timer?: Timer;
 	audio: string | undefined;
-	notificationStore: {
-		notifications: Notification[];
-		unreadCount: number;
-		loading: boolean;
-		error: string | null;
-		connected: boolean;
-	};
+	notificationStore: NotificationStore;
 }>({
 	ui: {
 		siteTitle: PUBLIC_SITE_TITLE,
@@ -36,13 +31,7 @@ export const appState = $state<{
 		pendingTurn: undefined,
 		pendingPartyTurnCount: undefined
 	},
-	notificationStore: {
-		notifications: [],
-		unreadCount: 0,
-		loading: false,
-		error: null,
-		connected: false
-	},
+	notificationStore: new NotificationStore(),
 	timer: undefined,
 	audio: undefined // path to audio file
 });
@@ -53,11 +42,7 @@ export function clearUserData() {
 	appState.play.game = undefined;
 	appState.play.pendingTurn = undefined;
 	appState.play.pendingPartyTurnCount = undefined;
-	appState.notificationStore.notifications = [];
-	appState.notificationStore.unreadCount = 0;
-	appState.notificationStore.error = null;
-	appState.notificationStore.connected = false;
-	appState.notificationStore.loading = false;
+	appState.notificationStore.reset();
 
 	// Clean up any active timers
 	if (appState.timer) {
@@ -118,8 +103,8 @@ export function clearUserData() {
 
 			// Clear any cached responses in the browser's HTTP cache related to user data
 			// This uses the Cache API if available (Service Worker context)
-			if ('caches' in window) {
-				caches
+			if (window.caches) {
+				window.caches
 					.keys()
 					.then((cacheNames) => {
 						cacheNames.forEach((cacheName) => {

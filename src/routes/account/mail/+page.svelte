@@ -8,9 +8,9 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { Notification } from '$lib/types/domain';
-	import { notificationActions } from '$lib/stores/notifications.svelte';
 	import { appState } from '$lib/appstate.svelte';
 	import SEO from '$lib/components/SEO.svelte';
+
 	const { data }: { data: PageData } = $props();
 
 	// Get page URL at component level for reactive access
@@ -63,7 +63,7 @@
 		onUpdated: ({ form }) => {
 			if (form.valid && form.data?.notificationId) {
 				// Update the store to reflect the read status change
-				notificationActions.markAsRead(form.data.notificationId);
+				appState.notificationStore.markAsRead(form.data.notificationId);
 				statusMessage = 'Notification marked as read';
 				// Clear message after announcement
 				setTimeout(() => (statusMessage = ''), 1000);
@@ -135,7 +135,7 @@
 
 			if (response.ok) {
 				// Update the store to reflect the read status change
-				notificationActions.markAsRead(notification.id);
+				appState.notificationStore.markAsRead(notification.id);
 			}
 
 			document.body.removeChild(form);
@@ -146,6 +146,7 @@
 			await goto(notification.actionUrl);
 		}
 	}
+
 </script>
 
 <SEO title="Notifications" description="View your game notifications and updates." noIndex={true} />

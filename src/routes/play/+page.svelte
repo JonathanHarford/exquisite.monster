@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { appState } from '$lib/appstate.svelte';
+	import { resolve } from '$app/paths';
 	import SEO from '$lib/components/SEO.svelte';
 	import { PUBLIC_SITE_TITLE } from '$env/static/public';
 	import { isHLCPlayer } from '$lib/utils/hlc';
@@ -8,7 +9,7 @@
 
 	const { data }: { data: PageData } = $props();
 
-	let findingGame = $state(false);
+	let findingGamePromise: Promise<void> | null = $state(null);
 	// Ensure consistent HLC determination - must be true for minors and players without self data
 	let isHLC = $derived(!data.self ? true : isHLCPlayer(data.self));
 
@@ -25,23 +26,33 @@
 		data.availableGameTypes.writingSafe || data.availableGameTypes.drawingSafe
 	);
 
-	const enhanceCb = () => {
-		findingGame = true;
+	// Enhance callback to track submission promise
+	import type { SubmitFunction } from '@sveltejs/kit';
+
+	const enhanceCb: SubmitFunction = () => {
+		let resolver: () => void;
+		// Create a promise that will resolve when the update is complete
+		findingGamePromise = new Promise<void>((resolve) => {
+			resolver = resolve;
+		});
+
 		appState.ui.loading = true;
-		return async ({ update }: { update: () => Promise<void> }) => {
+
+		return async ({ update }) => {
 			await update();
 			appState.ui.loading = false;
-			findingGame = false;
+			resolver();
+			findingGamePromise = null;
 		};
 	};
 
 	// Helper function to get tooltip text for disabled buttons
 	function getDisabledTooltip(options: {
-		findingGame: boolean;
+		findingGamePromise: Promise<void> | null;
 		isHLC?: boolean;
 		noGamesAvailable?: boolean;
 	}): string | null {
-		if (options.findingGame) return 'Please wait while we find a game...';
+		if (options.findingGamePromise) return 'Please wait while we find a game...';
 		if (options.isHLC) return 'You must be 18+ to play adult content';
 		if (options.noGamesAvailable) return 'No games available of this type right now';
 		return null;
@@ -63,13 +74,23 @@
 	<form method="POST" action="?/startTurn" use:enhance={enhanceCb}>
 		<!-- For HLC users, isLewd will be false. For non-HLC, it will be undefined, matching any. -->
 		<input type="hidden" name="isLewd" value={isHLC ? 'false' : ''} />
-		<button
-			type="submit"
-			class="btn btn-cta px-8 py-4 text-xl"
-			disabled={findingGame || appState.ui.loading}
-		>
-			{findingGame ? 'Finding a game...' : 'Play'}
-		</button>
+		{#await findingGamePromise}
+			<button
+				type="submit"
+				class="btn btn-cta px-8 py-4 text-xl"
+				disabled
+			>
+				Finding a game...
+			</button>
+		{:then}
+			<button
+				type="submit"
+				class="btn btn-cta px-8 py-4 text-xl"
+				disabled={appState.ui.loading}
+			>
+				Play
+			</button>
+		{/await}
 	</form>
 
 	<details class="w-full max-w-lg text-center">
@@ -85,9 +106,9 @@
 					<button
 						type="submit"
 						class="btn btn-cta h-full w-full"
-						disabled={findingGame || !data.availableGameTypes.writingSafe}
+						disabled={!!findingGamePromise || !data.availableGameTypes.writingSafe}
 						title={getDisabledTooltip({
-							findingGame,
+							findingGamePromise,
 							noGamesAvailable: !data.availableGameTypes.writingSafe
 						}) ?? ''}
 					>
@@ -100,9 +121,9 @@
 					<button
 						type="submit"
 						class="btn btn-danger h-full w-full"
-						disabled={findingGame || isHLC || !data.availableGameTypes.writingLewd}
+						disabled={!!findingGamePromise || isHLC || !data.availableGameTypes.writingLewd}
 						title={getDisabledTooltip({
-							findingGame,
+							findingGamePromise,
 							isHLC,
 							noGamesAvailable: !data.availableGameTypes.writingLewd
 						}) ?? ''}
@@ -118,9 +139,9 @@
 					<button
 						type="submit"
 						class="btn btn-cta h-full w-full"
-						disabled={findingGame || !data.availableGameTypes.drawingSafe}
+						disabled={!!findingGamePromise || !data.availableGameTypes.drawingSafe}
 						title={getDisabledTooltip({
-							findingGame,
+							findingGamePromise,
 							noGamesAvailable: !data.availableGameTypes.drawingSafe
 						}) ?? ''}
 					>
@@ -133,9 +154,9 @@
 					<button
 						type="submit"
 						class="btn btn-danger h-full w-full"
-						disabled={findingGame || isHLC || !data.availableGameTypes.drawingLewd}
+						disabled={!!findingGamePromise || isHLC || !data.availableGameTypes.drawingLewd}
 						title={getDisabledTooltip({
-							findingGame,
+							findingGamePromise,
 							isHLC,
 							noGamesAvailable: !data.availableGameTypes.drawingLewd
 						}) ?? ''}
@@ -151,8 +172,8 @@
 					<button
 						type="submit"
 						class="btn btn-cta h-full w-full"
-						disabled={findingGame}
-						title={getDisabledTooltip({ findingGame }) ?? ''}
+						disabled={!!findingGamePromise}
+						title={getDisabledTooltip({ findingGamePromise }) ?? ''}
 					>
 						Play
 					</button>
@@ -163,8 +184,8 @@
 					<button
 						type="submit"
 						class="btn btn-danger h-full w-full"
-						disabled={findingGame || isHLC}
-						title={getDisabledTooltip({ findingGame, isHLC }) ?? ''}
+						disabled={!!findingGamePromise || isHLC}
+						title={getDisabledTooltip({ findingGamePromise, isHLC }) ?? ''}
 					>
 						Play 18+
 					</button>
@@ -176,8 +197,8 @@
 					<button
 						type="submit"
 						class="btn btn-cta h-full w-full"
-						disabled={findingGame}
-						title={getDisabledTooltip({ findingGame }) ?? ''}
+						disabled={!!findingGamePromise}
+						title={getDisabledTooltip({ findingGamePromise }) ?? ''}
 					>
 						Play
 					</button>
@@ -187,8 +208,8 @@
 					<button
 						type="submit"
 						class="btn btn-danger h-full w-full"
-						disabled={findingGame || isHLC}
-						title={getDisabledTooltip({ findingGame, isHLC }) ?? ''}
+						disabled={!!findingGamePromise || isHLC}
+						title={getDisabledTooltip({ findingGamePromise, isHLC }) ?? ''}
 					>
 						Play 18+
 					</button>
@@ -204,7 +225,7 @@
 	</details>
 
 	<p>
-		Or, instead of playing against internet randos, try <a href="/s/new">Party Mode (Beta)</a> with your
+		Or, instead of playing against internet randos, try <a href={resolve('/s/new')}>Party Mode (Beta)</a> with your
 		real friends! It is undeniably the best way to play.
 	</p>
 </div>

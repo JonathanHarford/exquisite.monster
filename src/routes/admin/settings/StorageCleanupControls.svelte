@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Button, Label, Input, Select, Alert, Spinner, Card } from 'flowbite-svelte';
 	import { InfoCircleSolid, CheckCircleSolid, ExclamationCircleSolid } from 'flowbite-svelte-icons';
+	import { previewCleanup, runCleanup as executeCleanup } from '../../api/admin/cleanup.remote';
 
 	let cleanupType: 'temporary' | 'orphaned' = $state('temporary');
 	let maxAgeHours = $state(24);
@@ -25,27 +26,16 @@
 		result = null;
 
 		try {
-			const requestBody = {
+			const options = {
 				type: cleanupType,
+				bucketName: 'epyc-storage', // Default used in original code
+				directory: 'turns', // Default used in original code
 				maxAgeHours: cleanupType === 'temporary' ? maxAgeHours : undefined,
 				dryRun: cleanupType === 'orphaned' ? dryRun : false,
 				immediate
 			};
 
-			const response = await fetch('/api/admin/cleanup', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(requestBody)
-			});
-
-			if (!response.ok) {
-				const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-				throw new Error(errorData.message || `HTTP ${response.status}`);
-			}
-
-			result = await response.json();
+			result = await executeCleanup(options);
 		} catch (err) {
 			error = err instanceof Error ? err.message : String(err);
 		} finally {
@@ -53,26 +43,21 @@
 		}
 	}
 
-	async function previewCleanup() {
+	async function triggerPreview() {
 		isLoading = true;
 		error = null;
 		result = null;
 
 		try {
-			const params = new URLSearchParams({
+			const options = {
 				type: cleanupType,
-				...(cleanupType === 'temporary' && { maxAgeHours: maxAgeHours.toString() }),
-				...(cleanupType === 'orphaned' && { dryRun: 'true' })
-			});
+				bucketName: 'epyc-storage', // Default
+				directory: 'turns', // Default
+				...(cleanupType === 'temporary' && { maxAgeHours }),
+				...(cleanupType === 'orphaned' && { dryRun: true })
+			};
 
-			const response = await fetch(`/api/admin/cleanup?${params}`);
-
-			if (!response.ok) {
-				const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-				throw new Error(errorData.message || `HTTP ${response.status}`);
-			}
-
-			result = await response.json();
+			result = await previewCleanup(options);
 		} catch (err) {
 			error = err instanceof Error ? err.message : String(err);
 		} finally {
@@ -172,7 +157,7 @@
 		</div>
 
 		<div class="flex space-x-3">
-			<Button color="blue" onclick={previewCleanup} disabled={isLoading}>
+			<Button color="blue" onclick={triggerPreview} disabled={isLoading}>
 				{#if isLoading}
 					<Spinner class="mr-2" size="4" />
 				{/if}
