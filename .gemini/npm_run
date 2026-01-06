@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# npm_run: A wrapper for `npm run` to restrict which scripts can be executed.
+
+# --- Configuration ---
+# Add or remove scripts from this list to control what is allowed.
+ALLOWED_RUN_SCRIPTS=(
+    "test"
+    "test:unit"
+    "test:e2e"
+    "check"
+    "build"
+    "lint"
+    # "start"
+    # "deploy"
+)
+
+# --- Script Logic ---
+
+# Check if a script name was provided.
+if [ "$#" -eq 0 ]; then
+    echo "Usage: npm_run <script-name> [args...]"
+    echo "This is a wrapper for 'npm run' that only allows specific scripts."
+    echo "Allowed scripts: ${ALLOWED_RUN_SCRIPTS[*]}"
+    exit 1
+fi
+
+RUN_SCRIPT="$1"
+IS_SCRIPT_ALLOWED=0
+
+# Check if the requested script is in the allowlist.
+for allowed_script in "${ALLOWED_RUN_SCRIPTS[@]}"; do
+    if [ "$RUN_SCRIPT" == "$allowed_script" ]; then
+        IS_SCRIPT_ALLOWED=1
+        break
+    fi
+done
+
+# If the script is allowed, execute it via `npm run`. Otherwise, show an error.
+if [ "$IS_SCRIPT_ALLOWED" -eq 1 ]; then
+    echo "Executing allowed script: npm run $@"
+    npm run "$@"
+else
+    echo "Error: The script '$RUN_SCRIPT' is not allowed by npm_run." >&2
+    echo "Allowed scripts are: ${ALLOWED_RUN_SCRIPTS[*]}" >&2
+    exit 127 # Command not found
+fi
