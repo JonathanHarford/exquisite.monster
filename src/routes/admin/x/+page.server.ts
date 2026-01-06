@@ -3,15 +3,7 @@ import { prisma } from '$lib/server/prisma';
 import { fetchDefaultGameConfig } from '$lib/server/services/configService';
 import { createNotification } from '$lib/server/services/notificationService';
 import { parseDuration } from '$lib/datetime';
-import type { Actions, PageServerLoad } from './$types';
-
-export const load: PageServerLoad = async ({ locals }) => {
-	const userId = locals.auth().userId;
-
-	return {
-		userId
-	};
-};
+import type { Actions } from './$types';
 
 export const actions: Actions = {
 	sendTestNotification: async ({ locals, request }) => {

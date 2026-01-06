@@ -1,30 +1,11 @@
 import { fail, message, setError, superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
-import { z } from 'zod/v4';
+import { exampleFormSchema } from './schema';
 import type { Actions } from './$types';
-// Same as in the client. In practice, this would be in $lib/formSchemas.ts
-const schema = z.object({
-	email: z.string().email(),
-	password: z.string().min(6)
-});
-
-export const load = async () => {
-	const formSample = await superValidate(
-		{
-			email: 'test@example.com',
-			password: 'password'
-		},
-		zod4(schema)
-	);
-	return {
-		formSample,
-		otherImportantData: 'foo'
-	};
-};
 
 export const actions = {
 	default: async ({ request }) => {
-		const formSample = await superValidate(request, zod4(schema));
+		const formSample = await superValidate(request, zod4(exampleFormSchema));
 
 		if (!formSample.valid) {
 			return fail(400, { formSample });
