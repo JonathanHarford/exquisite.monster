@@ -33,7 +33,7 @@
 		"@eslint/compat": "^1.2.7",
 		"@playwright/test": "^1.57.0",
 		"@sveltejs/adapter-node": "^5.0.0",
-		"@sveltejs/kit": "^2.49.1",
+		"@sveltejs/kit": "^2.49.5",
 		"@sveltejs/vite-plugin-svelte": "^5.1.0",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/svelte": "^5.2.8",
